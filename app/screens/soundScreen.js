@@ -1,12 +1,26 @@
 import React from 'react';
-import {View, Text, StyleSheet, Image, Button, ToastAndroid, Pressable, ImageBackground} from 'react-native';
+import {View, Text, StyleSheet, Image, Button, ToastAndroid, Pressable, ImageBackground, Alert, ActivityIndicator} from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { Audio } from 'expo-av';
 import AdIcon from 'react-native-vector-icons/AntDesign';
 import MCiIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import FaIcon from 'react-native-vector-icons/FontAwesome';
 
-const SoundScreen = (props) => {
+const teoria = require('teoria');
+
+async function fetchWithTimeout(resource, options = {}) {
+    const { timeout = 5000 } = options;
+    const abortController = new AbortController();
+    const id = setTimeout(() => abortController.abort(), timeout);
+    const response = await fetch(resource, {
+      ...options,
+      signal: abortController.signal  
+    });
+    clearTimeout(id);
+    return response;
+}
+
+const SoundScreen = ({navigation}) => {
     const [recording, setRecording] = React.useState();
     const recRef = React.useRef(recording);
     // const setRecRef = React.useRef(setRecording);
@@ -18,6 +32,8 @@ const SoundScreen = (props) => {
     const audioRef = React.useRef(audioPlayer);
     const [playerStatus, setPlayerStatus] = React.useState();
     const [clickedAnalyze, setClickedAnalyze] = React.useState(false);
+    const [dots, setDots] = React.useState("   ");
+    const [notes, setNotes] = React.useState(null);
 
     recRef.current = recording;
     isPlayRef.current = isPlaying;
@@ -62,7 +78,8 @@ const SoundScreen = (props) => {
     
     pickAudio = async () => {
         let options = {
-        type:["audio/mpeg"]
+        type:["audio/mpeg", "audio/ogg", "audio/wav", "audio/x-wav", "audio/vnd.wav", "audio/*"]
+        // type:["audio/mpeg"]
         }
         let result = await DocumentPicker.getDocumentAsync(options);
         console.log(result);
@@ -81,7 +98,7 @@ const SoundScreen = (props) => {
                 console.log("i dunno why, but he thinks he is not loaded <?>")
             }
         }
-        await audioPlayer.loadAsync({ uri: soundUri }, {}, true);
+        await audioPlayer.loadAsync({uri: soundUri}, {}, true);
         const stat = await audioPlayer.getStatusAsync()
         setPlayerStatus(stat);
         if (stat.isLoaded) {
@@ -135,6 +152,67 @@ const SoundScreen = (props) => {
             stopAudio();
         pickAudio();
     }
+
+    const sendAudio = async () => {
+        splitedUri = soundUri.split(".")
+        const formdata = new FormData();
+        formdata.append('file', {
+          uri: soundUri,
+        //   type: 'audio/*',
+          type: 'audio/acc',
+          name: 'AudioFile'+'.'+splitedUri[splitedUri.length - 1],
+          extension: soundUri.split(".")[1]})  // not sure needed (maybe keep in comment)
+        console.log(soundUri.split(".")[1]);
+        // fetch('http://192.168.56.1:3000/insert', { //for emulator
+        // fetch('http://192.168.1.231:3000/insertAudio', { // for phone lan ipv4 make sure phone wifi!
+        // fetch('https://p0qfof98mb.execute-api.us-east-1.amazonaws.com/audioUpload/melodyDetect', {
+        // fetch('https://p0qfof98mb.execute-api.us-east-1.amazonaws.com/audioUpload/test2', {
+        await fetchWithTimeout('https://o5d9cl8ib7.execute-api.us-east-1.amazonaws.com/firstAttempt/{proxy+}', {
+            timeout: 10000, // 10 sec timeout, maybe need more
+            method: 'POST',
+            headers: {
+                "X-Requested-With": "XMLHttpRequest",  // same with or without?
+            //     // Accept: 'multipart/form-data',  //needed?       those 2 make network prob?!
+                'Content-Type': 'multipart/form-data'  // VERY IMPORTANT IN FLASK WAS IN COMMENT!!! but seems to work at first in aws.
+            //   'name': 'AudioFile'+'.'+splitedUri[splitedUri.length - 1],    // ADDED TO TRY SEE FOR WAV
+            },
+            body: formdata,
+        })
+        .then(resp => resp.json())
+        .then(notes => {
+            console.log(notes);
+            console.log("printed when returned (can take a while)");
+            var notesList = []
+            for (var i = 0; i < notes['notes'].length; i++) {
+                var name = teoria.note.fromKey(Number(notes['notes'][i][0])).toString()
+                // console.log(name);
+                var durr = Number(notes['notes'][i][1])
+                // console.log(durr);
+                notesList.push(teoria.note(name, { value: durr }));
+            }
+            for (i = 0; i < notesList.length; i++) {
+                console.log(notesList[i].toString(), notesList[i].duration.value);
+            }
+            // cancel loading effect
+            // instead of getData - return the list in d
+            // add show button
+          setNotes(notesList)  
+          setClickedAnalyze(false);
+        })
+        .catch(err => {
+            if (err.name === 'AbortError') {
+                console.log("server problem")      
+                Alert.alert('Connection problem', 'We having trouble access our servers, please try again later',
+                [{ text: 'OK', onPress: () => console.log('OK Pressed') }]); 
+            } else {
+                console.log("error occured", err)
+                Alert.alert('Problem', 'some problem occured, please make sure appropriate csv format',
+                [{ text: 'OK', onPress: () => console.log('OK Pressed') }]); 
+            }
+            setClickedAnalyze(false);
+        })
+    };
+
     React.useEffect(() => {
         // this function will be fired when you leave the page
         console.log("OUT!");
@@ -154,6 +232,22 @@ const SoundScreen = (props) => {
             }
         }
     }, []);
+    React.useEffect(() => {
+        (async () => {
+          if (clickedAnalyze || dots != "   ") {
+            setTimeout(() => {
+              if (dots == "   ")
+                setDots(".  ")
+              else if (dots == ".  ")
+                setDots(".. ")
+              else if (dots == ".. ")
+                setDots("...")
+              else
+                setDots("   ")
+            }, 200)
+          }
+        })();
+      }, [dots]);
     return (
         <View style={styles.background}>
             <ImageBackground source={require('../../assets/music_brown.jpg')} resizeMode="cover" style={styles.backgroundPicture}>
@@ -161,30 +255,38 @@ const SoundScreen = (props) => {
                     <View style={styles.c4}>
                         <Image style={styles.logo} source={require('../../assets/microphone.png')}/>
                     </View>
-                    <View style={styles.c4}>
+                    {/* <View style={styles.c4}> */}
                         <View style={styles.c1}>
-                            <View style={styles.c2}>
-                                <Text style={styles.text}>Record a melody</Text>
+                            <View style={styles.c22}>
+                                <Text style={styles.text}>Record a{'\n'}melody</Text>
                                 {recording ? 
                                     <MCiIcon name="stop-circle-outline" color="brown" size={50} onPress={handleRec}/> :
                                     <MCiIcon name="record-circle-outline" color="brown" size={50} onPress={handleRec}/>}
                             </View>        
-                            <View style={styles.c2}>
-                                <Text style={styles.text}>Choose audio file</Text>
+                            <View style={styles.c22}>
+                                <Text style={styles.text}>Choose audio{'\n'}file</Text>
                                 <FaIcon name="file-audio-o" color="orange" size={50} onPress={handleLibrary}/>
                             </View>
                         </View>
                         {isUploaded && (isPlaying ? <Text style={styles.text}>Stop</Text> : <Text style={styles.text}>Play</Text>)}
                         {isUploaded && (isPlaying ? <FaIcon name="stop" size={50} onPress={stopAudio}/> :
                         <AdIcon name="play" size={50} onPress={playAudio}/>)}
-                        <Pressable
-                            onPress={() => {setClickedAnalyze(true); console.log("pressed")}}
+                        {isUploaded && <Pressable
+                            onPress={() => {
+                                if (!clickedAnalyze) {
+                                    setClickedAnalyze(true);
+                                    setDots(".  ");
+                                    sendAudio();
+                                    console.log("pressed")}}
+                                }
                             style={styles.wrapperCustom}>
                             <Text style={styles.analyzeText}>
-                                {clickedAnalyze ? 'Analyzing...' : 'Analyze'}
+                                {clickedAnalyze ? 'Analyzing'+dots : 'Analyze'}
                             </Text>
-                        </Pressable>
-                    </View>
+                        </Pressable> }
+                        {clickedAnalyze && <ActivityIndicator size="large" color="#00ff00" />}
+                        {!clickedAnalyze && notes && <Button title="show" onPress={() => {navigation.navigate('Piano', {notes: notes, chords: [], screen: 'Piano'})}}/>}
+                    {/* </View> */}
                 </View>
             </ImageBackground>
         </View>
@@ -199,19 +301,39 @@ const styles = StyleSheet.create({
     text : {
         fontSize: 20,
         padding: 3,
+        flexShrink: 1,
+        textAlign: 'center',
+        justifyContent: 'center'
     },
     c1 :{
         // flex: 1,
         alignItems: 'flex-end',
         justifyContent: 'space-evenly',
         flexDirection: 'row',
+        // borderColor: 'black',
+        // borderWidth: 3
     },
     c2 :{
+        // flex: 1,
+        alignItems: 'center',
+        justifyContent: 'space-around',
+        // backgroundColor: "green",
+        padding: 10,
+        margin: 1,
+        marginRight: 10,
+        marginLeft: 10,
+        // borderColor: 'black',
+        // borderWidth: 3
+    },
+    c22 :{
         flex: 1,
         alignItems: 'center',
         justifyContent: 'space-around',
         // backgroundColor: "green",
         padding: 10,
+        margin: 2,
+        // borderColor: 'black',
+        // borderWidth: 3
     },
     c3 :{
         alignItems: 'center',
@@ -224,8 +346,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         // backgroundColor: "green",
-        padding: 10,
-        borderWidth: 10,
+        // padding: 10,
+        // borderWidth: 3,
     },
     logo :{
         width: 170,
@@ -243,6 +365,7 @@ const styles = StyleSheet.create({
         fontSize: 30,
         backgroundColor: 'orange',
         padding: 6,
+        margin: 5
     },
     backgroundPicture :{
         flex: 1,

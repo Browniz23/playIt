@@ -1,12 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import {View, Text, StyleSheet, Image, Pressable, ImageBackground, Dimensions, Button} from 'react-native';
+import {View, Text, StyleSheet, Image, Pressable, ImageBackground, Dimensions, Button, LogBox} from 'react-native';
 import FIonicons from 'react-native-vector-icons/Feather';
 import EIonicons from 'react-native-vector-icons/Entypo';
 import AdIcon from 'react-native-vector-icons/AntDesign';
 import FaIcon from 'react-native-vector-icons/FontAwesome';
 import OcIcon from 'react-native-vector-icons/Octicons'; // somehow doesnt recognize 'dot' or 'dot-fill'
+// import {
+//     TONE_CDMA_ALERT_CALL_GUARD,
+//     startTone,
+//     stopTone,
+//     getStreamMaxVolume,
+//     setStreamVolume,
+//   } from '@mgcrea/react-native-tone-generator';
+// import Tone from "react-native-tone-android"; 
 // import Frequency from 'react-native-frequency';
-
+// import PianoSampler from "react-native-piano-sampler";
+// const Frequency = require('react-native-frequency');
+// const toneGen = require('@mgcrea/react-native-tone-generator')
+const Tone = require('react-native-tone-android')
+const {PianoSampler} = require('react-native-piano-sampler');
 const { height } = Dimensions.get("window");
 const { width } = Dimensions.get("window");
 const teoria = require('teoria');
@@ -46,6 +58,7 @@ function playNextNote(note) {
     }
 }
 
+
 var timer = null;
 var timeLeft = 0;
 var timerEnd = 0;
@@ -74,11 +87,18 @@ const PianoScreen = ({ route, navigation }) => {
     const isVisibleChordRef = React.useRef(isVisibleChord);
     isVisibleDotRef.current = isVisibleDot;
     isVisibleChordRef.current = isVisibleChord;
+    LogBox.ignoreLogs([
+        'Non-serializable values were found in the navigation state',
+      ]);
     var notes = route.params.notes;
     var chords = route.params.chords;
     // start = () => {
     //     console.log("before");
-    //     Frequency.playFrequency(440, 5000);
+    //     // console.log(Frequency);
+    //     // Frequency.playFrequency(440, 5000);
+    //     console.log(PianoSampler);
+    //     PianoSampler.prepare();
+    //     PianoSampler.playNote(61, 5000);
     //     console.log("after");
     // }
     // console.log("height:", height, -0.0452*height, 0.0184*height);
@@ -103,8 +123,9 @@ const PianoScreen = ({ route, navigation }) => {
     useEffect(() => {
         console.log("useEffect");
         if (isPlaying) {
+            let stillAlive = true;
             (async () => {
-                for (c = startChordIdx; c < chords.length; c++) {
+                for (c = startChordIdx; c < chords.length && stillAlive; c++) {
                     var showTime = (c == 0) ? 250 : 1000 * SPEED / chords[c-1].notes()[0].duration.value;
                     if (chordTimeLeft != 0) {
                         showTime = chordTimeLeft;
@@ -146,21 +167,25 @@ const PianoScreen = ({ route, navigation }) => {
                         }, showTime);
                     });
                 }
-                await new Promise((resolve, reject) => {
-                    setTimeout(() => {
-                        // setIsVisibleDot(false);     // TODO: deal with notes collision!
-                        setIsVisibleChord(false);
-                        if (!isVisibleDotRef.current) {
-                            console.log("ISPLAYING CHANGE AT END!")
-                            setIsPlaying(false);        // TODO: deal with notes collision!
-                        }
-                        resolve()
-                    }, !isPlaying ? 0 : SPEED / chords[c-1].notes()[0].duration.value * 1000);
-                });
+                if (chords.length && stillAlive) {
+                    await new Promise((resolve, reject) => {
+                        setTimeout(() => {
+                            // setIsVisibleDot(false);     // TODO: deal with notes collision!
+                            setIsVisibleChord(false);
+                            if (!isVisibleDotRef.current) {
+                                console.log("ISPLAYING CHANGE AT END!")
+                                setIsPlaying(false);        // TODO: deal with notes collision!
+                            }
+                            resolve()
+                        }, !isPlaying ? 0 : SPEED / chords[c-1].notes()[0].duration.value * 1000);
+                    });
+                }
             })();
             (async () => {
-                for (n = startNoteIdx; n < notes.length; n++) {
+                for (n = startNoteIdx; n < notes.length && stillAlive; n++) {
                     var showTime = (n == 0) ? 250 : 1000 * SPEED / notes[n-1].duration.value;
+                    // perhaps change Speed to 1 and multiply with duration. exact time as measured.
+                    // means in harmony need to give different time (in 100ms units, like '5')
                     if (timeLeft != 0) {
                         showTime = timeLeft;
                         n = startNoteIdx;
@@ -171,35 +196,56 @@ const PianoScreen = ({ route, navigation }) => {
                     await new Promise((resolve, reject) => {
                         timerEnd = new Date().getTime() + showTime;
                         // console.log(timerEnd-showTime, timerEnd);
+                        // if (n != 0) {
+                        //     console.log(notes[n-1].fq())
+                        //     toneGen.startTone(TONE_CDMA_ALERT_CALL_GUARD, notes[n-1].fq());
+                        // }
                         timer = setTimeout(() => {
-                            setIsVisibleDot(true);
-                            console.log(notes[n].name(), notes[n].key(true));
-                            if (!isBlack(notes[n])) {
-                                // setSpot(-0.0452 + 0.0184 * notes[n].key(true));
-                                setSpot(-0.0143 + 0.0193 * notes[n].key(true));
+                            // toneGen.stopTone()
+                            // if (n != 0) {
+                            //     console.log(notes[n-1].fq())
+                            //     console.log(Tone)
+                            //     console.log(Tone.play)
+                            //     Tone.play(notes[n-1].fq(), showTime) // maybe wrong time
+                            // }
+                            if (notes[n].key() != 0) {
+                                setIsVisibleDot(true);
+                                console.log(notes[n].name(), notes[n].key(true));
+                                if (!isBlack(notes[n])) {
+                                    // setSpot(-0.0452 + 0.0184 * notes[n].key(true));
+                                    setSpot(-0.0143 + 0.0193 * notes[n].key(true));
+                                    setBlackWhiteSpot(0.42);
+                                    setCurrNoteName(notes[n].name());
+                                } else {
+                                    var s = getBlackSpot(notes[n]);
+                                    // console.log(s);
+                                    setSpot(s);
+                                    setBlackWhiteSpot(0.51);
+                                    setCurrNoteName(notes[n].toString());
+                                }
+                            }
+                            else {
+                                // setIsVisibleDot(false);
+                                setCurrNoteName("break");
+                                setSpot(-10); // 27 is key of 'e4' note.
                                 setBlackWhiteSpot(0.42);
-                                setCurrNoteName(notes[n].name());
-                            } else {
-                                var s = getBlackSpot(notes[n]);
-                                // console.log(s);
-                                setSpot(s);
-                                setBlackWhiteSpot(0.51);
-                                setCurrNoteName(notes[n].toString());
                             }
                             resolve(); // must be inside timer
                         }, showTime);
                     });
                 }
-                await new Promise((resolve, reject) => {
-                    setTimeout(() => {
-                        setIsVisibleDot(false);
-                        if (!isVisibleChordRef.current) {
-                            console.log("ISPLAYING CHANGE AT END!")
-                            setIsPlaying(false);        // TODO: deal with notes collision!
-                        }
-                        resolve()
-                    }, !isPlaying ? 0 : SPEED / notes[n-1].duration.value * 1000);
-                });
+                if (notes.length && stillAlive) {
+                    await new Promise((resolve, reject) => {
+                        setTimeout(() => {
+                            setIsVisibleDot(false);
+                            if (!isVisibleChordRef.current) {
+                                console.log("ISPLAYING CHANGE AT END!")
+                                setIsPlaying(false);        // TODO: deal with notes collision!
+                            }
+                            resolve()
+                        }, !isPlaying ? 0 : SPEED / notes[n-1].duration.value * 1000);
+                    });
+                }
             })();
         } else {
             console.log("OUT. isPlaying False");
@@ -221,18 +267,26 @@ const PianoScreen = ({ route, navigation }) => {
             clearTimeout(timer); 
             clearTimeout(chordTimer); 
         }
+        // cleaunp function
+        return (() => {
+            clearTimeout(timer); 
+            clearTimeout(chordTimer); 
+            stillAlive = false});
     }, [isPlaying, isPaused]);
     var dot = function(spot, blackWhiteSpot) {
         return {
-            top: height * spot - 25,
+            top: height * spot - 25 + 15, // added +15 for safe area (as keyboard pic)
             left: width * blackWhiteSpot - 25,
             position: "absolute", 
-            borderWidth: 3,
+            // borderWidth: 3,
         }
     }
     var currNote = function(spot, blackWhiteSpot) {
+        if (currNoteName == "break") {
+            spot = -0.0143 + 0.0193 * 27; // 27 is 'e4' note num.
+        }
         return {
-            top: height * spot - 25 + 15, // need fix 15 according height!
+            top: height * spot - 25 + 15 + 15, // need fix 15 according height! // added +15 for safe area (as keyboard pic)
             left: width * blackWhiteSpot - 25 + 120, 
             position: "absolute", 
             fontSize: 20,
@@ -243,50 +297,47 @@ const PianoScreen = ({ route, navigation }) => {
         }
     }
     return (
-        // <View style={styles.background}>
-            <ImageBackground source={require('../../assets/music_brown.jpg')} resizeMode="cover" style={styles.backgroundPicture}>
-                <ImageBackground style={longPiano ? styles.longPiano : styles.shortPiano} source={require('../../assets/long_piano_side.png')}></ImageBackground>
-                {isVisibleDot && (isPlaying || isPaused) && <Text style={currNote(spot, blackWhiteSpot)}>{currNoteName}</Text>}
-                {isVisibleChord && (isPlaying || isPaused) && <Text style={currNote(chordSpot[0],chordBlackWhiteSpot[0])}>{chordNotes[0]}</Text>}
-                {isVisibleChord && (isPlaying || isPaused) && <Text style={currNote(chordSpot[1],chordBlackWhiteSpot[1])}>{chordNotes[1]}</Text>}
-                {isVisibleChord && (isPlaying || isPaused) && <Text style={currNote(chordSpot[2],chordBlackWhiteSpot[2])}>{chordNotes[2]}</Text>}
-                {isVisibleChord && (isPlaying || isPaused) && <Text style={currNote(chordSpot[3],chordBlackWhiteSpot[3])}>{chordNotes[3]}</Text>}
-                {isVisibleChord && (isPlaying || isPaused) && <Text style={currNote(chordSpot[4],chordBlackWhiteSpot[4])}>{chordNotes[4]}</Text>}
-                {isVisibleChord && (isPlaying || isPaused) && <Text style={styles.currChord}>{currChordName}</Text>}
-                <View style={dot(spot, blackWhiteSpot)}>
-                    <EIonicons name='dot-single' size={isVisibleDot && (isPlaying || isPaused) ? 50 : 0} style={styles.dot}/>    
-                </View>
-                <View style={dot(chordSpot[0],chordBlackWhiteSpot[0])}>
-                    <EIonicons name='dot-single' size={isVisibleChord && (isPlaying || isPaused) ? 50 : 0} style={styles.chordDot}/>    
-                </View>
-                <View style={dot(chordSpot[1],chordBlackWhiteSpot[1])}>
-                    <EIonicons name='dot-single' size={isVisibleChord && (isPlaying || isPaused) ? 50 : 0} style={styles.chordDot}/>    
-                </View>
-                <View style={dot(chordSpot[2],chordBlackWhiteSpot[2])}>
-                    <EIonicons name='dot-single' size={isVisibleChord && (isPlaying || isPaused) ? 50 : 0} style={styles.chordDot}/>    
-                </View>
-                <View style={dot(chordSpot[3],chordBlackWhiteSpot[3])}>
-                    <EIonicons name='dot-single' size={isVisibleChord && (isPlaying || isPaused) ? 50 : 0} style={styles.chordDot}/>    
-                </View>
-                <View style={dot(chordSpot[4],chordBlackWhiteSpot[4])}>
-                    <EIonicons name='dot-single' size={isVisibleChord && (isPlaying || isPaused) ? 50 : 0} style={styles.chordDot}/>    
-                </View>
-                <Pressable
-                    onPress={() => {setLongPiano(!longPiano)}}
-                        style={styles.wrapperCustom}>
-                        {() => (
-                        longPiano ? <FIonicons name='zoom-in' size={30} style={styles.zoom}/> :
-                            <FIonicons name='zoom-out' size={30} style={styles.zoom}/>
-                    )}
-                </Pressable>
-                <View style={styles.actionButtons}>
-                    <FaIcon name="stop-circle" size={50} onPress={onStop} style={styles.stop}/>
-                    {(isPlaying ? <FIonicons name="pause-circle" size={45} onPress={onPause} style={styles.play}/> : 
-                        <AdIcon name="play" size={45} onPress={onStart} style={styles.play}/>)}
-                </View>
-                {/* <Button title="start" onPress={start}/> */}
-            </ImageBackground>
-        // </View> 
+        <ImageBackground source={require('../../assets/music_brown.jpg')} resizeMode="cover" style={styles.backgroundPicture}>
+            <ImageBackground style={longPiano ? styles.longPiano : styles.shortPiano} source={require('../../assets/long_piano_side.png')}></ImageBackground>
+            {isVisibleDot && (isPlaying || isPaused) && <Text style={currNote(spot, blackWhiteSpot)}>{currNoteName}</Text>}
+            {isVisibleChord && (isPlaying || isPaused) && <Text style={currNote(chordSpot[0],chordBlackWhiteSpot[0])}>{chordNotes[0]}</Text>}
+            {isVisibleChord && (isPlaying || isPaused) && <Text style={currNote(chordSpot[1],chordBlackWhiteSpot[1])}>{chordNotes[1]}</Text>}
+            {isVisibleChord && (isPlaying || isPaused) && <Text style={currNote(chordSpot[2],chordBlackWhiteSpot[2])}>{chordNotes[2]}</Text>}
+            {isVisibleChord && (isPlaying || isPaused) && <Text style={currNote(chordSpot[3],chordBlackWhiteSpot[3])}>{chordNotes[3]}</Text>}
+            {isVisibleChord && (isPlaying || isPaused) && <Text style={currNote(chordSpot[4],chordBlackWhiteSpot[4])}>{chordNotes[4]}</Text>}
+            {isVisibleChord && (isPlaying || isPaused) && <Text style={styles.currChord}>{currChordName}</Text>}
+            <View style={dot(spot, blackWhiteSpot)}>
+                <EIonicons name='dot-single' size={isVisibleDot && (isPlaying || isPaused) ? 50 : 0} style={styles.dot}/>    
+            </View>
+            <View style={dot(chordSpot[0],chordBlackWhiteSpot[0])}>
+                <EIonicons name='dot-single' size={isVisibleChord && (isPlaying || isPaused) ? 50 : 0} style={styles.chordDot}/>    
+            </View>
+            <View style={dot(chordSpot[1],chordBlackWhiteSpot[1])}>
+                <EIonicons name='dot-single' size={isVisibleChord && (isPlaying || isPaused) ? 50 : 0} style={styles.chordDot}/>    
+            </View>
+            <View style={dot(chordSpot[2],chordBlackWhiteSpot[2])}>
+                <EIonicons name='dot-single' size={isVisibleChord && (isPlaying || isPaused) ? 50 : 0} style={styles.chordDot}/>    
+            </View>
+            <View style={dot(chordSpot[3],chordBlackWhiteSpot[3])}>
+                <EIonicons name='dot-single' size={isVisibleChord && (isPlaying || isPaused) ? 50 : 0} style={styles.chordDot}/>    
+            </View>
+            <View style={dot(chordSpot[4],chordBlackWhiteSpot[4])}>
+                <EIonicons name='dot-single' size={isVisibleChord && (isPlaying || isPaused) ? 50 : 0} style={styles.chordDot}/>    
+            </View>
+            <Pressable
+                onPress={() => {setLongPiano(!longPiano)}}
+                    style={styles.wrapperCustom}>
+                    {() => (
+                    longPiano ? <FIonicons name='zoom-in' size={30} style={styles.zoom}/> :
+                        <FIonicons name='zoom-out' size={30} style={styles.zoom}/>
+                )}
+            </Pressable>
+            <View style={styles.actionButtons}>
+                <FaIcon name="stop-circle" size={50} onPress={onStop} style={styles.stop}/>
+                {(isPlaying ? <FIonicons name="pause-circle" size={45} onPress={onPause} style={styles.play}/> : 
+                    <AdIcon name="play" size={45} onPress={onStart} style={styles.play}/>)}
+            </View>
+        </ImageBackground>
     );
 }
 
@@ -301,17 +352,21 @@ const styles = StyleSheet.create({
         color: "steelblue",
     },
     longPiano: {
-        borderWidth: 2,
+        // borderWidth: 2,
         alignItems: 'center',
         justifyContent: 'center',
         height: height,
         width: width * 0.7,
         // width: width * 0.5,
+        // added:
+        top: 15 // margin from top
+        // position: 'absolute', 
+        // bottom: 0,
     },
     shortPiano: {
         width: width * 1.3,
         height: height,
-        borderWidth: 2,
+        // borderWidth: 2,
         alignItems: 'center',
         justifyContent: 'center',
     },
@@ -353,7 +408,7 @@ const styles = StyleSheet.create({
         color: "purple",
     },
     actionButtons: {
-        borderWidth: 2,
+        // borderWidth: 2,
         alignContent: 'center',
         justifyContent: 'center',
         position: 'absolute',

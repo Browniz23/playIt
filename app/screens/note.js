@@ -38,7 +38,8 @@ var ch = teoria.chord('g',6);
 for (i in ch.notes()) {
   console.log(ch.notes()[i].toString(), ch.notes()[i].duration.value);
 }
-
+console.log(teoria.note.fromKey(0).toString());
+console.log(teoria.note.fromKey(-1).toString());
 // var ach = a.chord('min');
 // for (i in ach.notes()) {
 //   console.log(ach.notes()[i].toString());

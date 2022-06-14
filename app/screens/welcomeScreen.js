@@ -33,9 +33,7 @@ const WelcomeScreen = ({navigation}) => {
               onPress={() => {navigation.navigate('Choose')}}
               style={styles.wrapperCustom}>
               {({ pressed }) => (
-                <Text style={styles.text}>
-                  {pressed ? 'on my way :)' : 'Lets go!'}
-                </Text>
+                <Text style={styles.text}>Lets go!</Text>
               )}
             </Pressable>
           </View>
