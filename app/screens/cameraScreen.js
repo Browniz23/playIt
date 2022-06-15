@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {View, Text, StyleSheet, Image, Button, Platform, Pressable, ImageBackground, Alert, ActivityIndicator} from 'react-native';
+import {View, Text, StyleSheet, Image, Button, Platform, Pressable, ImageBackground, Alert, ActivityIndicator, Modal} from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import AdIcon from 'react-native-vector-icons/AntDesign';
 import MCiIcon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -22,6 +22,7 @@ const CameraScreen = (props) => {
     const [image, setImage] = useState(null);
     const [clickedAnalyze, setClickedAnalyze] = useState(false);
     const [dots, setDots] = useState("   ");
+    const [modalVisible, setModalVisible] = useState(false);
     useEffect(() => {
         (async () => {
         if (Platform.OS !== 'web') {
@@ -113,7 +114,31 @@ const CameraScreen = (props) => {
         <View style={styles.background}>
           <ImageBackground source={require('../../assets/music_brown.jpg')} resizeMode="cover" style={styles.backgroundPicture}>
             <View style={styles.c2}>
-              <Image style={styles.logo} source={require('../../assets/camera.png')}/>
+              <Pressable
+                  onPress={() => setModalVisible(!modalVisible)}
+                  style={styles.wrapperCustom}>
+                  {() => (
+                      <Image style={styles.logo} source={require('../../assets/camera.png')}/>
+                  )}
+              </Pressable>
+              <Modal
+                  animationType="fade"
+                  transparent={true}
+                  visible={modalVisible}
+                  onRequestClose={() => {setModalVisible(!modalVisible);}}>
+                  <View style={styles.centeredView}>
+                    <View style={styles.modalView}>
+                        <Text style={styles.modalText}>Image feature!{'\n\n'}Upload an image of sheet music.{'\n\n'}Tips for better accuracy:{'\n\n'}* Use a high quality image.{'\n'}* Use a clear and direct picture.{'\n\n'}Our algorithm will analyze your image and detect the notes.</Text>
+                        <Pressable
+                        style={[styles.button, styles.buttonClose]}
+                        onPress={() => setModalVisible(!modalVisible)}
+                        >
+                        <Text style={styles.textStyle}>Hide info</Text>
+                        </Pressable>
+                    </View>
+                  </View>
+              </Modal>
+              {/* <Image style={styles.logo} source={require('../../assets/camera.png')}/> */}
               <View style={styles.c1}>
                 <View style={styles.c22}>
                   <Text style={styles.text}>Take a{'\n'}picture</Text>
@@ -224,6 +249,49 @@ const styles = StyleSheet.create({
       // paddingVertical: 5,
       borderColor: 'black',
       margin: 2,
+    },
+    centeredView: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      marginTop: 22
+    },
+    modalView: {
+      margin: 20,
+      backgroundColor: "#008B8B",
+      borderRadius: 20,
+      padding: 35,
+      alignItems: "center",
+      shadowColor: "#000",
+      shadowOffset: {
+        width: 0,
+        height: 2
+      },
+      shadowOpacity: 0.25,
+      shadowRadius: 4,
+      elevation: 5
+    },
+    button: {
+      borderRadius: 20,
+      padding: 10,
+      elevation: 2
+    },
+    buttonOpen: {
+      backgroundColor: "#F194FF",
+    },
+    buttonClose: {
+      backgroundColor: "#4682B4",
+    },
+    textStyle: {
+      fontSize: 15,
+      color: "white",
+      fontWeight: "bold",
+      textAlign: "center"
+    },
+    modalText: {
+      fontSize: 20,
+      marginBottom: 15,
+      textAlign: "center"
     }
 });
 export default CameraScreen;

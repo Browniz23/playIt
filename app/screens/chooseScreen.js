@@ -12,7 +12,7 @@ const ChooseScreen = ({navigation}) => {
                 <View style={styles.c3}>
                 <Text style={styles.text}>Get melody from image</Text>
                 <Pressable
-                    onPress={() => {navigation.navigate('FeaturesTabs', {initialRoute: 'Camera', screen: 'Camera'})}}
+                    onPress={() => {navigation.navigate('FeaturesTabs', {initialRoute: 'Image', screen: 'Image'})}}
                     style={styles.wrapperCustom}>
                     {() => (
                         <Image style={styles.logo} source={require('../../assets/camera.png')}/>

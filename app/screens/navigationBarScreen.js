@@ -21,7 +21,7 @@ const tabs = (props) => {
         screenOptions={({ route }) => ({ //TODO: DOESNT REALLY NEED!
             screenOptions: ({ focused, color, size }) => {
                 let iconName;
-                if (route.name === 'Camera') {
+                if (route.name === 'Image') {
                     return <Image style={styles.logo} source={require('../../assets/camera.png')}/>
                 } else if (route.name === 'Sound') {
                     return <Image style={styles.logo} source={require('../../assets/microphone.png')}/>
@@ -34,8 +34,8 @@ const tabs = (props) => {
             activeTintColor: 'tomato',
             inactiveTintColor: 'gray',
         }}>
-        <Tab.Screen name="Camera" component={CameraScreen} options={{
-            tabBarLabel: 'Camera',
+        <Tab.Screen name="Image" component={CameraScreen} options={{
+            tabBarLabel: 'Image',
             tabBarIcon: ({focused, color, size}) => (
               <Image style={focused ? styles.tabImageBold : styles.tabImage} source={require('../../assets/camera.png')}/>
             ),}}/>

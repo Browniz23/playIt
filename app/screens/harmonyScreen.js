@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import {View, Text, StyleSheet, Image, Pressable, Button, ImageBackground, Alert, ActivityIndicator} from 'react-native';
+import {View, Text, StyleSheet, Image, Pressable, Button, ImageBackground, Alert, ActivityIndicator, Modal} from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
 import CameraScreen from './cameraScreen';
@@ -47,8 +47,10 @@ const HarmonyScreen = ({navigation}) => {
     const [melodyData, setMelodyData] = useState('none');
     const [isUploaded, setIsUploaded] = React.useState(false);
     const [dots, setDots] = React.useState("   ");
-    const [chordList, setChordList] = React.useState(null);
-
+    // const [chordList, setChordList] = React.useState(null);
+    const [chordList, setChordList] = React.useState(chords); // only for easy checking
+    const [modalVisible, setModalVisible] = useState(false);
+     
     pickCSV = async () => {
         let options = {
         type:["text/comma-separated-values", 'text/csv'] // maybe only for android. ios maybe text/csv
@@ -143,7 +145,31 @@ const HarmonyScreen = ({navigation}) => {
         <View style={styles.background}>
             <ImageBackground source={require('../../assets/music_brown.jpg')} resizeMode="cover" style={styles.backgroundPicture}>
                 <View style={styles.c2}>
-                    <Image style={styles.logo} source={require('../../assets/music-book.jpg')}/>
+                    <Pressable
+                        onPress={() => setModalVisible(!modalVisible)}
+                        style={styles.wrapperCustom}>
+                        {() => (
+                            <Image style={styles.logo} source={require('../../assets/symphony.jpg')}/>
+                        )}
+                    </Pressable>
+                    {/* <Image style={styles.logo} source={require('../../assets/symphony.jpg')} onPress={() => setModalVisible(!modalVisible)}/> */}
+                    <Modal
+                        animationType="fade"
+                        transparent={true}
+                        visible={modalVisible}
+                        onRequestClose={() => {setModalVisible(!modalVisible);}}>
+                        <View style={styles.centeredView}>
+                        <View style={styles.modalView}>
+                            <Text style={styles.modalText}>Harmony feature!{'\n\n'}Upload a CSV file which contains a melody in the following format:{'\n\n'}time, measure, key_fifths, key_mode, chord_root, chord_type, note_root, note_octave, note_duration.{'\n\n'} Our algorithm will analyze your melody and find nice fitting chords {':)'}</Text>
+                            <Pressable
+                            style={[styles.button, styles.buttonClose]}
+                            onPress={() => setModalVisible(!modalVisible)}
+                            >
+                            <Text style={styles.textStyle}>Hide info</Text>
+                            </Pressable>
+                        </View>
+                        </View>
+                    </Modal>
                 <View style={styles.c3}>
                     <Text style={styles.text}>Upload melody as CSV</Text>
                     <Fa5Icon name="file-csv" color="green" size={60} onPress={pickCSV}/>
@@ -258,5 +284,48 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         margin: 5,
     },
+    centeredView: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        marginTop: 22
+      },
+      modalView: {
+        margin: 20,
+        backgroundColor: "#008B8B",
+        borderRadius: 20,
+        padding: 35,
+        alignItems: "center",
+        shadowColor: "#000",
+        shadowOffset: {
+          width: 0,
+          height: 2
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5
+      },
+      button: {
+        borderRadius: 20,
+        padding: 10,
+        elevation: 2
+      },
+      buttonOpen: {
+        backgroundColor: "#F194FF",
+      },
+      buttonClose: {
+        backgroundColor: "#4682B4",
+      },
+      textStyle: {
+        fontSize: 15,
+        color: "white",
+        fontWeight: "bold",
+        textAlign: "center"
+      },
+      modalText: {
+        fontSize: 20,
+        marginBottom: 15,
+        textAlign: "center"
+      }
 });
 export default HarmonyScreen;

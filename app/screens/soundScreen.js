@@ -1,5 +1,5 @@
 import React from 'react';
-import {View, Text, StyleSheet, Image, Button, ToastAndroid, Pressable, ImageBackground, Alert, ActivityIndicator} from 'react-native';
+import {View, Text, StyleSheet, Image, Button, Platform, ToastAndroid, Pressable, ImageBackground, Alert, ActivityIndicator, Modal} from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { Audio } from 'expo-av';
 import AdIcon from 'react-native-vector-icons/AntDesign';
@@ -21,7 +21,7 @@ async function fetchWithTimeout(resource, options = {}) {
 }
 
 const SoundScreen = ({navigation}) => {
-    const [recording, setRecording] = React.useState();
+    const [recording, setRecording] = React.useState(); 
     const recRef = React.useRef(recording);
     // const setRecRef = React.useRef(setRecording);
     const [isUploaded, setIsUploaded] = React.useState(false);
@@ -34,6 +34,7 @@ const SoundScreen = ({navigation}) => {
     const [clickedAnalyze, setClickedAnalyze] = React.useState(false);
     const [dots, setDots] = React.useState("   ");
     const [notes, setNotes] = React.useState(null);
+    const [modalVisible, setModalVisible] = React.useState(false);
 
     recRef.current = recording;
     isPlayRef.current = isPlaying;
@@ -41,6 +42,7 @@ const SoundScreen = ({navigation}) => {
 
     async function startRecording() {
         try {
+            setSoundUri(null); // added and helped prevent second time abort
             console.log('Requesting permissions..');
             await Audio.requestPermissionsAsync();
             await Audio.setAudioModeAsync({
@@ -52,7 +54,8 @@ const SoundScreen = ({navigation}) => {
                 Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY);
             setRecording(recording);
             console.log('Recording started');
-            ToastAndroid.show('Recording started', ToastAndroid.SHORT);
+            if (Platform.OS !== 'ios')
+                ToastAndroid.show('Recording started', ToastAndroid.SHORT);
         } catch (err) {
             console.error('Failed to start recording', err);
         }
@@ -61,18 +64,24 @@ const SoundScreen = ({navigation}) => {
     }
 
     async function stopRecording() {
-        if (recording) {
-            console.log('Stopping recording..');
-            setRecording(undefined);                    // todo: order here is not peoblem?!?!
-            await recording.stopAndUnloadAsync();
-            setSoundUri(recording.getURI());
-            console.log('Recording stopped and stored at', soundUri);
-            ToastAndroid.show('Recording stopped', ToastAndroid.SHORT);
-            if (soundUri) {
-                console.log("yes indeed wee")
-                ToastAndroid.show('Stored at: ',soundUri, ToastAndroid.SHORT);
-            }
-            setIsUploaded(true)
+        try {
+            if (recording) {
+                console.log('Stopping recording..');
+                await recording.stopAndUnloadAsync(); 
+                setSoundUri(recording.getURI());
+                setRecording(undefined);                    // todo: order here is not peoblem?!?! was first of 3
+                console.log('Recording stopped and stored at', soundUri);
+                if (Platform.OS !== 'ios')
+                    ToastAndroid.show('Recording stopped', ToastAndroid.SHORT);
+                if (soundUri) {
+                    console.log("yes indeed wee")
+                    if (Platform.OS !== 'ios')
+                        ToastAndroid.show('Stored at: ',soundUri, ToastAndroid.SHORT);
+                }
+                setIsUploaded(true);
+            }   
+        } catch (error) {
+            console.log("ERROR CAUGHT")
         }
     }
     
@@ -253,39 +262,63 @@ const SoundScreen = ({navigation}) => {
             <ImageBackground source={require('../../assets/music_brown.jpg')} resizeMode="cover" style={styles.backgroundPicture}>
                 <View style={styles.c2}>
                     <View style={styles.c4}>
-                        <Image style={styles.logo} source={require('../../assets/microphone.png')}/>
+                        <Pressable
+                            onPress={() => setModalVisible(!modalVisible)}
+                            style={styles.wrapperCustom}>
+                            {() => (
+                                <Image style={styles.logo} source={require('../../assets/microphone.png')}/>
+                            )}
+                        </Pressable>
+                        <Modal
+                            animationType="fade"
+                            transparent={true}
+                            visible={modalVisible}
+                            onRequestClose={() => {setModalVisible(!modalVisible);}}>
+                            <View style={styles.centeredView}>
+                                <View style={styles.modalView}>
+                                    <Text style={styles.modalText}>Sound feature!{'\n\n'}Upload an audio file of a melody, without harmony.{'\n\n'}Tips for better accuracy:{'\n\n'}* Record in a quiet room.{'\n'}* Use an accurate non-harmonized tool {'('}for example, an Organ is better than a piano{').'}{'\n'}* Press each note separately.{'\n\n'} Our algorithm will analyze the file and detect the melody notes.</Text>
+                                    <Pressable
+                                    style={[styles.button, styles.buttonClose]}
+                                    onPress={() => setModalVisible(!modalVisible)}
+                                    >
+                                    <Text style={styles.textStyle}>Hide info</Text>
+                                    </Pressable>
+                                </View>
+                            </View>
+                        </Modal>
+                        {/* <Image style={styles.logo} source={require('../../assets/microphone.png')}/> */}
                     </View>
                     {/* <View style={styles.c4}> */}
-                        <View style={styles.c1}>
-                            <View style={styles.c22}>
-                                <Text style={styles.text}>Record a{'\n'}melody</Text>
-                                {recording ? 
-                                    <MCiIcon name="stop-circle-outline" color="brown" size={50} onPress={handleRec}/> :
-                                    <MCiIcon name="record-circle-outline" color="brown" size={50} onPress={handleRec}/>}
-                            </View>        
-                            <View style={styles.c22}>
-                                <Text style={styles.text}>Choose audio{'\n'}file</Text>
-                                <FaIcon name="file-audio-o" color="orange" size={50} onPress={handleLibrary}/>
-                            </View>
+                    <View style={styles.c1}>
+                        <View style={styles.c22}>
+                            <Text style={styles.text}>Record a{'\n'}melody</Text>
+                            {recording ? 
+                                <MCiIcon name="stop-circle-outline" color="brown" size={50} onPress={handleRec}/> :
+                                <MCiIcon name="record-circle-outline" color="brown" size={50} onPress={handleRec}/>}
+                        </View>        
+                        <View style={styles.c22}>
+                            <Text style={styles.text}>Choose audio{'\n'}file</Text>
+                            <FaIcon name="file-audio-o" color="orange" size={50} onPress={handleLibrary}/>
                         </View>
-                        {isUploaded && (isPlaying ? <Text style={styles.text}>Stop</Text> : <Text style={styles.text}>Play</Text>)}
-                        {isUploaded && (isPlaying ? <FaIcon name="stop" size={50} onPress={stopAudio}/> :
-                        <AdIcon name="play" size={50} onPress={playAudio}/>)}
-                        {isUploaded && <Pressable
-                            onPress={() => {
-                                if (!clickedAnalyze) {
-                                    setClickedAnalyze(true);
-                                    setDots(".  ");
-                                    sendAudio();
-                                    console.log("pressed")}}
-                                }
-                            style={styles.wrapperCustom}>
-                            <Text style={styles.analyzeText}>
-                                {clickedAnalyze ? 'Analyzing'+dots : 'Analyze'}
-                            </Text>
-                        </Pressable> }
-                        {clickedAnalyze && <ActivityIndicator size="large" color="#00ff00" />}
-                        {!clickedAnalyze && notes && <Button title="show" onPress={() => {navigation.navigate('Piano', {notes: notes, chords: [], screen: 'Piano'})}}/>}
+                    </View>
+                    {isUploaded && (isPlaying ? <Text style={styles.text}>Stop</Text> : <Text style={styles.text}>Play</Text>)}
+                    {isUploaded && (isPlaying ? <FaIcon name="stop" size={50} onPress={stopAudio}/> :
+                    <AdIcon name="play" size={50} onPress={playAudio}/>)}
+                    {isUploaded && <Pressable
+                        onPress={() => {
+                            if (!clickedAnalyze) {
+                                setClickedAnalyze(true);
+                                setDots(".  ");
+                                sendAudio();
+                                console.log("pressed")}}
+                            }
+                        style={styles.wrapperCustom}>
+                        <Text style={styles.analyzeText}>
+                            {clickedAnalyze ? 'Analyzing'+dots : 'Analyze'}
+                        </Text>
+                    </Pressable> }
+                    {clickedAnalyze && <ActivityIndicator size="large" color="#00ff00" />}
+                    {!clickedAnalyze && notes && <Button title="show" onPress={() => {navigation.navigate('Piano', {notes: notes, chords: [], screen: 'Piano'})}}/>}
                     {/* </View> */}
                 </View>
             </ImageBackground>
@@ -371,5 +404,48 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
     },
+    centeredView: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        marginTop: 22
+      },
+      modalView: {
+        margin: 20,
+        backgroundColor: "#008B8B",
+        borderRadius: 20,
+        padding: 35,
+        alignItems: "center",
+        shadowColor: "#000",
+        shadowOffset: {
+          width: 0,
+          height: 2
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5
+      },
+      button: {
+        borderRadius: 20,
+        padding: 10,
+        elevation: 2
+      },
+      buttonOpen: {
+        backgroundColor: "#F194FF",
+      },
+      buttonClose: {
+        backgroundColor: "#4682B4",
+      },
+      textStyle: {
+        fontSize: 15,
+        color: "white",
+        fontWeight: "bold",
+        textAlign: "center"
+      },
+      modalText: {
+        fontSize: 20,
+        marginBottom: 15,
+        textAlign: "center"
+      }
 });
 export default SoundScreen;

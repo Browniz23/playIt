@@ -275,7 +275,7 @@ const PianoScreen = ({ route, navigation }) => {
     }, [isPlaying, isPaused]);
     var dot = function(spot, blackWhiteSpot) {
         return {
-            top: height * spot - 25 + 15, // added +15 for safe area (as keyboard pic)
+            top: height * spot - 25 + 13, // added +15 for safe area (as keyboard pic)
             left: width * blackWhiteSpot - 25,
             position: "absolute", 
             // borderWidth: 3,
@@ -286,7 +286,7 @@ const PianoScreen = ({ route, navigation }) => {
             spot = -0.0143 + 0.0193 * 27; // 27 is 'e4' note num.
         }
         return {
-            top: height * spot - 25 + 15 + 15, // need fix 15 according height! // added +15 for safe area (as keyboard pic)
+            top: height * spot - 25 + height*0.0161 + 12, // need fix 15 according height! // added +15 for safe area (as keyboard pic). swapped 15 with 11 for emulator and than height*0.0161
             left: width * blackWhiteSpot - 25 + 120, 
             position: "absolute", 
             fontSize: 20,
@@ -296,6 +296,7 @@ const PianoScreen = ({ route, navigation }) => {
             color: "black"
         }
     }
+    console.log("height:",height, 11/height, height*0.0161);
     return (
         <ImageBackground source={require('../../assets/music_brown.jpg')} resizeMode="cover" style={styles.backgroundPicture}>
             <ImageBackground style={longPiano ? styles.longPiano : styles.shortPiano} source={require('../../assets/long_piano_side.png')}></ImageBackground>
@@ -359,7 +360,8 @@ const styles = StyleSheet.create({
         width: width * 0.7,
         // width: width * 0.5,
         // added:
-        top: 15 // margin from top
+        // top: 15 // margin from top
+        top: 12 // instead of 15 doesnt make sense!!
         // position: 'absolute', 
         // bottom: 0,
     },
