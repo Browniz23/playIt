@@ -195,7 +195,7 @@ const SoundScreen = ({navigation}) => {
             for (var i = 0; i < notes['notes'].length; i++) {
                 var name = teoria.note.fromKey(Number(notes['notes'][i][0])).toString()
                 // console.log(name);
-                var durr = Number(notes['notes'][i][1])
+                var durr = Number(notes['notes'][i][1]) // in 200 millisec units ('2'-> 400 ms)
                 // console.log(durr);
                 notesList.push(teoria.note(name, { value: durr }));
             }

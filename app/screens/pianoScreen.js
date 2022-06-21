@@ -23,7 +23,7 @@ const { height } = Dimensions.get("window");
 const { width } = Dimensions.get("window");
 const teoria = require('teoria');
 const BLACKS = [2,5,7,10,12,14,17,19,22,24,26,29,31,34,36,38,41,43,46,48,50,53,55,58,60,62,65,67,70,72,74,77,79,82,84,86];
-var SPEED = 6;
+// var SPEED = 6;
 
 function isBlack(note) {    
     if (BLACKS.includes(note.key()))
@@ -126,7 +126,8 @@ const PianoScreen = ({ route, navigation }) => {
             let stillAlive = true;
             (async () => {
                 for (c = startChordIdx; c < chords.length && stillAlive; c++) {
-                    var showTime = (c == 0) ? 250 : 1000 * SPEED / chords[c-1].notes()[0].duration.value;
+                    // var showTime = (c == 0) ? 250 : 1000 * SPEED / chords[c-1].notes()[0].duration.value;
+                    var showTime = (c == 0) ? 250 : chords[c-1].notes()[0].duration.value * 200;
                     if (chordTimeLeft != 0) {
                         showTime = chordTimeLeft;
                         c = startChordIdx;
@@ -177,13 +178,15 @@ const PianoScreen = ({ route, navigation }) => {
                                 setIsPlaying(false);        // TODO: deal with notes collision!
                             }
                             resolve()
-                        }, !isPlaying ? 0 : SPEED / chords[c-1].notes()[0].duration.value * 1000);
+                        // }, !isPlaying ? 0 : SPEED / chords[c-1].notes()[0].duration.value * 1000);
+                        }, !isPlaying ? 0 : chords[c-1].notes()[0].duration.value * 200);
                     });
                 }
             })();
             (async () => {
                 for (n = startNoteIdx; n < notes.length && stillAlive; n++) {
-                    var showTime = (n == 0) ? 250 : 1000 * SPEED / notes[n-1].duration.value;
+                    // var showTime = (n == 0) ? 250 : 1000 * SPEED / notes[n-1].duration.value;
+                    var showTime = (n == 0) ? 250 : notes[n-1].duration.value * 200;
                     // perhaps change Speed to 1 and multiply with duration. exact time as measured.
                     // means in harmony need to give different time (in 100ms units, like '5')
                     if (timeLeft != 0) {
@@ -243,7 +246,8 @@ const PianoScreen = ({ route, navigation }) => {
                                 setIsPlaying(false);        // TODO: deal with notes collision!
                             }
                             resolve()
-                        }, !isPlaying ? 0 : SPEED / notes[n-1].duration.value * 1000);
+                        // }, !isPlaying ? 0 : SPEED / notes[n-1].duration.value * 1000);
+                        }, !isPlaying ? 0 : notes[n-1].duration.value * 200);
                     });
                 }
             })();
@@ -334,9 +338,9 @@ const PianoScreen = ({ route, navigation }) => {
                 )}
             </Pressable>
             <View style={styles.actionButtons}>
-                <FaIcon name="stop-circle" size={50} onPress={onStop} style={styles.stop}/>
-                {(isPlaying ? <FIonicons name="pause-circle" size={45} onPress={onPause} style={styles.play}/> : 
-                    <AdIcon name="play" size={45} onPress={onStart} style={styles.play}/>)}
+                <FaIcon name="stop-circle" size={60} onPress={onStop} style={styles.stop}/>
+                {(isPlaying ? <FIonicons name="pause-circle" size={55} onPress={onPause} style={styles.play}/> : 
+                    <AdIcon name="play" size={55} onPress={onStart} style={styles.play}/>)}
             </View>
         </ImageBackground>
     );
@@ -414,14 +418,14 @@ const styles = StyleSheet.create({
         alignContent: 'center',
         justifyContent: 'center',
         position: 'absolute',
-        top: height * 0.4,
+        top: height * 0.42, // was 0.4
         left: width * 0.15,
     },
     currChord: {
-            top: height * 0.45,
+            top: height * 0.49, // was 0.45
             left: width * 0.3, 
             position: "absolute", 
-            fontSize: 23,
+            fontSize: 27, // was 23
             fontWeight: 'bold',
             padding: 3,
             transform: [{ rotate: "90deg" }],
