@@ -8,6 +8,7 @@ import FaIcon from 'react-native-vector-icons/FontAwesome';
 
 const teoria = require('teoria');
 
+// fetch with given timeout function
 async function fetchWithTimeout(resource, options = {}) {
     const { timeout = 5000 } = options;
     const abortController = new AbortController();
@@ -21,6 +22,8 @@ async function fetchWithTimeout(resource, options = {}) {
 }
 
 const SoundScreen = ({navigation}) => {
+
+    // state & ref variables
     const [recording, setRecording] = React.useState(); 
     const recRef = React.useRef(recording);
     // const setRecRef = React.useRef(setRecording);
@@ -40,6 +43,7 @@ const SoundScreen = ({navigation}) => {
     isPlayRef.current = isPlaying;
     audioRef.current = audioPlayer;
 
+    // recording start
     async function startRecording() {
         try {
             setSoundUri(null); // added and helped prevent second time abort
@@ -63,6 +67,7 @@ const SoundScreen = ({navigation}) => {
         // this function will be fired when you leave the page
     }
 
+    // recording stop
     async function stopRecording() {
         try {
             if (recording) {
@@ -85,6 +90,7 @@ const SoundScreen = ({navigation}) => {
         }
     }
     
+    // getting audio from library
     pickAudio = async () => {
         let options = {
         type:["audio/mpeg", "audio/ogg", "audio/wav", "audio/x-wav", "audio/vnd.wav", "audio/*"]
@@ -98,6 +104,7 @@ const SoundScreen = ({navigation}) => {
         }
     }
 
+    // playing uploaded audio
     playAudio = async () => {
         if (playerStatus && playerStatus.isLoaded){
             try {
@@ -131,6 +138,7 @@ const SoundScreen = ({navigation}) => {
         })());
     }
 
+    // stopping audio play
     stopAudio = async () => {
         const stat = await audioPlayer.getStatusAsync()
         setPlayerStatus(stat);
@@ -145,6 +153,7 @@ const SoundScreen = ({navigation}) => {
             console.log("need to stop when not playing??")
     }
 
+    // handle recording button click
     handleRec = async () => {
         if (!recording) {
             if (isPlaying)
@@ -155,6 +164,7 @@ const SoundScreen = ({navigation}) => {
             stopRecording();
     };
 
+    // handle library button click
     handleLibrary = async () => {
         console.log("play:",isPlayRef, isPlaying);
         if (isPlaying)
@@ -162,6 +172,7 @@ const SoundScreen = ({navigation}) => {
         pickAudio();
     }
 
+    // send audio to server to perform analyze and get notes list as result
     const sendAudio = async () => {
         splitedUri = soundUri.split(".")
         const formdata = new FormData();
@@ -172,12 +183,8 @@ const SoundScreen = ({navigation}) => {
           name: 'AudioFile'+'.'+splitedUri[splitedUri.length - 1],
           extension: soundUri.split(".")[1]})  // not sure needed (maybe keep in comment)
         console.log(soundUri.split(".")[1]);
-        // fetch('http://192.168.56.1:3000/insert', { //for emulator
-        // fetch('http://192.168.1.231:3000/insertAudio', { // for phone lan ipv4 make sure phone wifi!
-        // fetch('https://p0qfof98mb.execute-api.us-east-1.amazonaws.com/audioUpload/melodyDetect', {
-        // fetch('https://p0qfof98mb.execute-api.us-east-1.amazonaws.com/audioUpload/test2', {
         await fetchWithTimeout('https://o5d9cl8ib7.execute-api.us-east-1.amazonaws.com/firstAttempt/{proxy+}', {
-            timeout: 10000, // 10 sec timeout, maybe need more
+            timeout: 15000, // 15 sec timeout, maybe need more
             method: 'POST',
             headers: {
                 "X-Requested-With": "XMLHttpRequest",  // same with or without?
@@ -194,17 +201,12 @@ const SoundScreen = ({navigation}) => {
             var notesList = []
             for (var i = 0; i < notes['notes'].length; i++) {
                 var name = teoria.note.fromKey(Number(notes['notes'][i][0])).toString()
-                // console.log(name);
                 var durr = Number(notes['notes'][i][1]) // in 200 millisec units ('2'-> 400 ms)
-                // console.log(durr);
                 notesList.push(teoria.note(name, { value: durr }));
             }
             for (i = 0; i < notesList.length; i++) {
                 console.log(notesList[i].toString(), notesList[i].duration.value);
             }
-            // cancel loading effect
-            // instead of getData - return the list in d
-            // add show button
           setNotes(notesList)  
           setClickedAnalyze(false);
         })
@@ -222,8 +224,8 @@ const SoundScreen = ({navigation}) => {
         })
     };
 
+    // cleanup function
     React.useEffect(() => {
-        // this function will be fired when you leave the page
         console.log("OUT!");
         return ()=>{
             console.log("IN!", recRef.current?false:true, isPlayRef.current);
@@ -241,6 +243,8 @@ const SoundScreen = ({navigation}) => {
             }
         }
     }, []);
+
+    // analyzing dots update
     React.useEffect(() => {
         (async () => {
           if (clickedAnalyze || dots != "   ") {
@@ -257,6 +261,8 @@ const SoundScreen = ({navigation}) => {
           }
         })();
       }, [dots]);
+
+    // actual view  
     return (
         <View style={styles.background}>
             <ImageBackground source={require('../../assets/music_brown.jpg')} resizeMode="cover" style={styles.backgroundPicture}>
@@ -286,9 +292,7 @@ const SoundScreen = ({navigation}) => {
                                 </View>
                             </View>
                         </Modal>
-                        {/* <Image style={styles.logo} source={require('../../assets/microphone.png')}/> */}
                     </View>
-                    {/* <View style={styles.c4}> */}
                     <View style={styles.c1}>
                         <View style={styles.c22}>
                             <Text style={styles.text}>Record a{'\n'}melody</Text>
@@ -319,13 +323,13 @@ const SoundScreen = ({navigation}) => {
                     </Pressable> }
                     {clickedAnalyze && <ActivityIndicator size="large" color="#00ff00" />}
                     {!clickedAnalyze && notes && <Button title="show" onPress={() => {navigation.navigate('Piano', {notes: notes, chords: [], screen: 'Piano'})}}/>}
-                    {/* </View> */}
                 </View>
             </ImageBackground>
         </View>
     );
 }
 
+// styles
 const styles = StyleSheet.create({
     background :{
         flex: 1,

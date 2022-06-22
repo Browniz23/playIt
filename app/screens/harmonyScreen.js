@@ -16,6 +16,7 @@ import * as ExpoFileSystem from 'expo-file-system'
 // const csvToJson = require('convert-csv-to-json');
 const teoria = require('teoria');
 
+// fetch with given timeout function
 async function fetchWithTimeout(resource, options = {}) {
     const { timeout = 5000 } = options;
     const abortController = new AbortController();
@@ -29,7 +30,8 @@ async function fetchWithTimeout(resource, options = {}) {
 }
 
 const HarmonyScreen = ({navigation}) => {
-    // var notes = [{name :'b', duration:1, num:2}, {name :'c', duration:2, num:5}, {name :'g', duration:3, num:10}, {name :'a', duration:4, num:40}]
+    
+    // notes and chords for example show
     var a = teoria.note('a1', { value: 4 });
     var b = teoria.note('b2', { value: 4 });
     var c = teoria.note('c3', { value: 4 });
@@ -43,14 +45,15 @@ const HarmonyScreen = ({navigation}) => {
     var ch1 = teoria.chord('g',6); var ch2 = teoria.chord('a7',5); var ch3 = teoria.chord('c',5); var ch4 = teoria.chord('f',6);
     var chords = [ch1, ch2, ch3, ch4];
 
+    // state variables
     const [clickedCreate, setClickedCreate] = useState(false);
     const [melodyData, setMelodyData] = useState('none');
     const [isUploaded, setIsUploaded] = React.useState(false);
     const [dots, setDots] = React.useState("   ");
-    // const [chordList, setChordList] = React.useState(null);
     const [chordList, setChordList] = React.useState(chords); // only for easy checking
     const [modalVisible, setModalVisible] = useState(false);
-     
+
+    // get CSV file from library
     pickCSV = async () => {
         let options = {
         type:["text/comma-separated-values", 'text/csv'] // maybe only for android. ios maybe text/csv
@@ -62,44 +65,24 @@ const HarmonyScreen = ({navigation}) => {
             setIsUploaded(true);
             const fileContent = await ExpoFileSystem.readAsStringAsync(result.uri);
             console.log(fileContent);
-            // const content = JSON.parse(fileContent);
             setMelodyData(fileContent);
         }
     }
 
-    const getData = () => {  // need ip of virtualBox ipv4
-        // fetch('http://192.168.56.1:3000/get', {
-        fetch('http://192.168.1.231:3000/get', {
-            method: 'GET',
-            headers: {
-                Accept: 'application/json',
-                'Content-Type': 'application/json'  // I added this line
-            }
-        })
-        .then(resp => resp.json())
-        .then(d => {
-            console.log(d['data']);
-            setMelodyData(d.data);
-        })
-        .catch(err => console.log(err))
-    }
-
-    const insertData = async () => {  // need ip of virtualBox ipv4 for emulator
-        // fetch('http://192.168.56.1:3000/insert', { //for emulator   
-        await fetchWithTimeout('http://192.168.1.231:3000/insert', { // for phone lan ipv4 make sure phone wifi!
-            timeout: 2000, // 10 sec timeout, maybe need more
+    // send csv to server to perform analyze and get chords list as result
+    const insertData = async () => {
+        await fetchWithTimeout('http://192.168.1.231:3000/insert', { 
+            timeout: 3000, // 3 sec timeout, change when acutally call
             method: 'POST',
             headers: {
                 Accept: 'application/json',
                 'Content-Type': 'application/json'  // I added this line
             },
             body: JSON.stringify({melodyData : melodyData}),
-            // body: checkingData
         }) 
         .then(resp => resp.json())
         .then(d => {
             console.log("printed when returned (can take a while)");
-            // console.log(d);
             var chordList = []
             for (var i = 0; i < d['chords'].length; i++) {
                 var name = d['chords'][i][0];
@@ -125,6 +108,8 @@ const HarmonyScreen = ({navigation}) => {
             setClickedCreate(false);
         })
     }
+
+    // analyzing dots update
     React.useEffect(() => {
         (async () => {
           if (clickedCreate || dots != "   ") {
@@ -141,6 +126,8 @@ const HarmonyScreen = ({navigation}) => {
           }
         })();
       }, [dots]);
+
+    // actual view  
     return (
         <View style={styles.background}>
             <ImageBackground source={require('../../assets/music_brown.jpg')} resizeMode="cover" style={styles.backgroundPicture}>
@@ -152,7 +139,6 @@ const HarmonyScreen = ({navigation}) => {
                             <Image style={styles.logo} source={require('../../assets/symphony.jpg')}/>
                         )}
                     </Pressable>
-                    {/* <Image style={styles.logo} source={require('../../assets/symphony.jpg')} onPress={() => setModalVisible(!modalVisible)}/> */}
                     <Modal
                         animationType="fade"
                         transparent={true}
@@ -173,14 +159,6 @@ const HarmonyScreen = ({navigation}) => {
                 <View style={styles.c3}>
                     <Text style={styles.text}>Upload melody as CSV</Text>
                     <Fa5Icon name="file-csv" color="green" size={60} onPress={pickCSV}/>
-                    {/* <Pressable
-                    onPress={() => {
-                        pickCSV();}}
-                    style={styles.wrapperCustom}>
-                    <Text style={styles.analyzeText}>
-                        Upload melody as CSV
-                    </Text>
-                    </Pressable> */}
                     {isUploaded && <Pressable
                     onPress={() => {
                         if (!clickedCreate) {
@@ -203,6 +181,7 @@ const HarmonyScreen = ({navigation}) => {
     );
 }
 
+// styles
 const styles = StyleSheet.create({
     background :{
         flex: 1,
@@ -255,22 +234,13 @@ const styles = StyleSheet.create({
         borderRadius: 170 / 2,
     },
     wrapperCustom: {
-        borderRadius: 10,
-        
+        borderRadius: 10, 
     },
     analyzeText: {
         borderRadius: 10,
         fontSize: 30,
         backgroundColor: 'orange',
         padding: 6,
-    },
-    pianoBoard : {
-        alignItems: 'center',
-        justifyContent: 'flex-start',
-    },
-    piano: {
-        width: 350,
-        height: 300,
     },
     backgroundPicture :{
         flex: 1,

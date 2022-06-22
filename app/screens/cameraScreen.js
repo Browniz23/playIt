@@ -6,6 +6,7 @@ import MCiIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import FaIcon from 'react-native-vector-icons/FontAwesome';
 import * as ExpoFileSystem from 'expo-file-system'
 
+// fetch with given timeout function
 async function fetchWithTimeout(resource, options = {}) {
   const { timeout = 5000 } = options;
   const abortController = new AbortController();
@@ -19,10 +20,14 @@ async function fetchWithTimeout(resource, options = {}) {
 }
 
 const CameraScreen = (props) => {
+
+    // state variables
     const [image, setImage] = useState(null);
     const [clickedAnalyze, setClickedAnalyze] = useState(false);
     const [dots, setDots] = useState("   ");
     const [modalVisible, setModalVisible] = useState(false);
+
+    // permissions - first time
     useEffect(() => {
         (async () => {
         if (Platform.OS !== 'web') {
@@ -33,6 +38,8 @@ const CameraScreen = (props) => {
           }
         })();
     }, []);
+
+    // pick image from library
     const pickGallery = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
           mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -44,6 +51,8 @@ const CameraScreen = (props) => {
           setImage(result);
         }
       };
+
+    // get image from device camera
     const pickCamera = async () => {
         let result = await ImagePicker.launchCameraAsync({
           mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -55,7 +64,8 @@ const CameraScreen = (props) => {
           setImage(result);
         }
       };
-    
+
+    // send image to server to perform analyze and get result
     const sendImage = async () => {
       const formdata = new FormData();
       formdata.append('file', {
@@ -63,16 +73,13 @@ const CameraScreen = (props) => {
         type: 'image/jpeg',
         name: 'imageFile',
         extension: image.uri.split(".")[1]})  // not sure needed (maybe keep in comment)
-      console.log(image);
-      console.log(image.uri.split(".")[1]);
-      // fetch('http://192.168.56.1:3000/insert', { //for emulator
       await fetchWithTimeout('http://192.168.1.231:3000/insertImage', { // for phone lan ipv4 make sure phone wifi!
             timeout: 2000,
             method: 'POST',
             headers: {
                 "X-Requested-With": "XMLHttpRequest"  // same with or without?
             //     // Accept: 'multipart/form-data',  //needed?       those 2 make network prob?!
-            //     'Content-Type': 'multipart/form-data'  // I added this line
+            //     'Content-Type': 'multipart/form-data'  // added this line. changed?
             },
             body: formdata
       })
@@ -94,6 +101,8 @@ const CameraScreen = (props) => {
         setClickedAnalyze(false);
       });
     };
+
+    // analyzing dots update
     useEffect(() => {
       (async () => {
         if (clickedAnalyze || dots != "   ") {
@@ -110,6 +119,8 @@ const CameraScreen = (props) => {
         }
       })();
     }, [dots]);
+
+    // actual view
     return (
         <View style={styles.background}>
           <ImageBackground source={require('../../assets/music_brown.jpg')} resizeMode="cover" style={styles.backgroundPicture}>
@@ -138,7 +149,6 @@ const CameraScreen = (props) => {
                     </View>
                   </View>
               </Modal>
-              {/* <Image style={styles.logo} source={require('../../assets/camera.png')}/> */}
               <View style={styles.c1}>
                 <View style={styles.c22}>
                   <Text style={styles.text}>Take a{'\n'}picture</Text>
@@ -170,6 +180,7 @@ const CameraScreen = (props) => {
     );
 }
 
+// styles
 const styles = StyleSheet.create({
     background :{
         flex: 1,

@@ -32,18 +32,17 @@ function FeaturesTabs (props) {
   }, []);
   return (
       <Tab.Navigator initialRouteName={initialRoute} backBehavior='none'
-      screenOptions={({ route }) => ({ //TODO: DOESNT REALLY NEED!
-          screenOptions: ({ focused, color, size }) => {
-              let iconName;
-              if (route.name === 'Image') {
-                  return <Image style={styles.logo} source={require('../assets/camera.png')}/>
-              } else if (route.name === 'Sound') {
-                  return <Image style={styles.logo} source={require('../assets/microphone.png')}/>
-              } else {
-                  return <Image style={styles.logo} source={require('../assets/symphony.jpg')}/>
-              }
-          },
-      })}
+      // screenOptions={({ route }) => ({ //TODO: DOESNT REALLY NEED!
+      //     screenOptions: ({ focused, color, size }) => {
+      //         if (route.name === 'Image') {
+      //             return <Image style={styles.logo} source={require('../assets/camera.png')}/>
+      //         } else if (route.name === 'Sound') {
+      //             return <Image style={styles.logo} source={require('../assets/microphone.png')}/>
+      //         } else {
+      //             return <Image style={styles.logo} source={require('../assets/symphony.jpg')}/>
+      //         }
+      //     },
+      // })}
       tabBarStyle={{
           activeTintColor: 'tomato',
           inactiveTintColor: 'gray',
@@ -83,31 +82,6 @@ const myStack = () => {
 }
 
 const styles = StyleSheet.create({
-  background :{
-      flex: 1,
-      backgroundColor: "lavender"
-  },
-  c1 :{
-      // flex: 1,
-      alignItems: 'flex-end',
-      justifyContent: 'space-evenly',
-      backgroundColor: "blue",
-      flex: 1,
-      flexDirection: 'row',
-  },
-  c2 :{
-      // flex: 1,
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: "green",
-  },
-  c3 :{
-      flex: 1,
-      alignItems: 'center',
-      justifyContent: 'flex-start',
-      backgroundColor: "navy",
-      padding: 10,
-  },
   logo :{
       width: 170,
       height: 170,

@@ -48,27 +48,21 @@ const ChooseScreen = ({navigation}) => {
 const styles = StyleSheet.create({
     background :{
         flex: 1,
-        // backgroundColor: "lavender",
     },
     c1 :{
-        // flex: 1,
         alignItems: 'flex-end',
         justifyContent: 'space-evenly',
-        // backgroundColor: "lavender",
         flex: 1,
         flexDirection: 'row',
     },
     c2 :{
-        // flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        // backgroundColor: "green",
     },
     c3 :{
         flex: 1,
         alignItems: 'center',
         justifyContent: 'flex-start',
-        // backgroundColor: "lavender",
         padding: 10,
     },
     logo :{
