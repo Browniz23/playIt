@@ -10,11 +10,11 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 import { DefaultTheme, DarkTheme } from '@react-navigation/native';
-import NavigationBarScreen from './screens/navigationBarScreen';
 import PianoScreen from './screens/pianoScreen';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import {Restart} from 'fiction-expo-restart';
 import {I18nManager} from 'react-native';
+// import NavigationBarScreen from './screens/navigationBarScreen';
 
 
 const Tab = createBottomTabNavigator();

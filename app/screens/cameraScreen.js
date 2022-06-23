@@ -95,7 +95,7 @@ const CameraScreen = (props) => {
             [{ text: 'OK', onPress: () => console.log('OK Pressed') }]); 
         } else {
             console.log("error occured", err)
-            Alert.alert('Problem', 'some problem occured, please make sure appropriate csv format',
+            Alert.alert('Problem', 'some problem occured, please try again',
             [{ text: 'OK', onPress: () => console.log('OK Pressed') }]); 
         }
         setClickedAnalyze(false);
