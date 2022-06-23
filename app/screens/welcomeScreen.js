@@ -33,9 +33,7 @@ const WelcomeScreen = ({navigation}) => {
               onPress={() => {navigation.navigate('Choose')}}
               style={styles.wrapperCustom}>
               {({ pressed }) => (
-                <Text style={styles.text}>
-                  {pressed ? 'on my way :)' : 'Lets go!'}
-                </Text>
+                <Text style={styles.text}>Lets go!</Text>
               )}
             </Pressable>
           </View>
@@ -77,19 +75,16 @@ const styles = StyleSheet.create({
     flex: 1.15,
     alignItems: 'center',
     justifyContent: 'center',
-    // backgroundColor: "blue",
   },
   c2 :{
     flex: 1.75,
     alignItems: 'center',
     justifyContent: 'center',
-    // backgroundColor: "red",
   },
   c3 :{
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    // backgroundColor: "yellow",
   },
   backgroundVideo: {
     height: height + 30, /* how to know 30?*/

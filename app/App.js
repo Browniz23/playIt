@@ -10,11 +10,11 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 import { DefaultTheme, DarkTheme } from '@react-navigation/native';
-import NavigationBarScreen from './screens/navigationBarScreen';
 import PianoScreen from './screens/pianoScreen';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import {Restart} from 'fiction-expo-restart';
 import {I18nManager} from 'react-native';
+// import NavigationBarScreen from './screens/navigationBarScreen';
 
 
 const Tab = createBottomTabNavigator();
@@ -32,24 +32,23 @@ function FeaturesTabs (props) {
   }, []);
   return (
       <Tab.Navigator initialRouteName={initialRoute} backBehavior='none'
-      screenOptions={({ route }) => ({ //TODO: DOESNT REALLY NEED!
-          screenOptions: ({ focused, color, size }) => {
-              let iconName;
-              if (route.name === 'Camera') {
-                  return <Image style={styles.logo} source={require('../assets/camera.png')}/>
-              } else if (route.name === 'Sound') {
-                  return <Image style={styles.logo} source={require('../assets/microphone.png')}/>
-              } else {
-                  return <Image style={styles.logo} source={require('../assets/symphony.jpg')}/>
-              }
-          },
-      })}
+      // screenOptions={({ route }) => ({ //TODO: DOESNT REALLY NEED!
+      //     screenOptions: ({ focused, color, size }) => {
+      //         if (route.name === 'Image') {
+      //             return <Image style={styles.logo} source={require('../assets/camera.png')}/>
+      //         } else if (route.name === 'Sound') {
+      //             return <Image style={styles.logo} source={require('../assets/microphone.png')}/>
+      //         } else {
+      //             return <Image style={styles.logo} source={require('../assets/symphony.jpg')}/>
+      //         }
+      //     },
+      // })}
       tabBarStyle={{
           activeTintColor: 'tomato',
           inactiveTintColor: 'gray',
       }}>
-      <Tab.Screen name="Camera" component={CameraScreen} options={{
-          tabBarLabel: 'Camera',
+      <Tab.Screen name="Image" component={CameraScreen} options={{
+          tabBarLabel: 'Image',
           tabBarIcon: ({focused, color, size}) => (
             <Image style={focused ? styles.tabImageBold : styles.tabImage} source={require('../assets/camera.png')}/>
           ),}}/>
@@ -83,31 +82,6 @@ const myStack = () => {
 }
 
 const styles = StyleSheet.create({
-  background :{
-      flex: 1,
-      backgroundColor: "lavender"
-  },
-  c1 :{
-      // flex: 1,
-      alignItems: 'flex-end',
-      justifyContent: 'space-evenly',
-      backgroundColor: "blue",
-      flex: 1,
-      flexDirection: 'row',
-  },
-  c2 :{
-      // flex: 1,
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: "green",
-  },
-  c3 :{
-      flex: 1,
-      alignItems: 'center',
-      justifyContent: 'flex-start',
-      backgroundColor: "navy",
-      padding: 10,
-  },
   logo :{
       width: 170,
       height: 170,
