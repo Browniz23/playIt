@@ -51,7 +51,7 @@ const HarmonyScreen = ({navigation}) => {
     const [melodyData, setMelodyData] = useState('none');
     const [isUploaded, setIsUploaded] = React.useState(false);
     const [dots, setDots] = React.useState("   ");
-    const [chordList, setChordList] = React.useState(chords); // only for easy checking
+    const [chordList, setChordList] = React.useState(null); // only for easy checking
     const [modalVisible, setModalVisible] = useState(false);
     const [csvDoc, setCsvDoc] = useState(null);
 
@@ -100,10 +100,8 @@ const HarmonyScreen = ({navigation}) => {
             timeout: 30000, // 30 sec timeout
             method: 'POST',
             headers: {
-                "X-Requested-With": "XMLHttpRequest",  // same with or without?
-                // Accept: 'multipart/form-data',  //needed?       those 2 make network prob?!
-                'Content-Type': 'multipart/form-data'  // VERY IMPORTANT IN FLASK WAS IN COMMENT!!! but seems to work at first in aws.
-                //   'name': 'AudioFile'+'.'+splitedUri[splitedUri.length - 1],    // ADDED TO TRY SEE FOR WAV
+                "X-Requested-With": "XMLHttpRequest",  
+                'Content-Type': 'multipart/form-data'  
             },
             body: formdata,
         })
@@ -173,7 +171,7 @@ const HarmonyScreen = ({navigation}) => {
                         onRequestClose={() => {setModalVisible(!modalVisible);}}>
                         <View style={styles.centeredView}>
                         <View style={styles.modalView}>
-                            <Text style={styles.modalText}>Harmony feature!{'\n\n'}Upload a CSV file which contains a melody in the following format:{'\n\n'}time, measure, key_fifths, key_mode, chord_root, chord_type, note_root, note_octave, note_duration.{'\n\n'} Our algorithm will analyze your melody and find nice fitting chords {':)'}</Text>
+                            <Text style={styles.modalText}>Harmony feature!{'\n\n'}Upload a CSV file which contains a melody in the following format:{'\n\n'}measure, note_root, note_octave, note_duration.{'\n\n'} Our algorithm will analyze your melody and find nice fitting chords {':)'}</Text>
                             <Pressable
                             style={[styles.button, styles.buttonClose]}
                             onPress={() => setModalVisible(!modalVisible)}
@@ -251,6 +249,7 @@ const styles = StyleSheet.create({
         fontSize: 30,
         backgroundColor: 'orange',
         padding: 6,
+        margin: 6,
     },
     backgroundPicture :{
         flex: 1,

@@ -123,7 +123,7 @@ const SoundScreen = ({navigation}) => {
         // set for audioPlayer contains setting setOnPlaybackStatusUpdate.
         setAudioPlayer( (() => {
             var myAudio = audioPlayer;
-            console.log("HOW MANY TIMES?!?!?!")
+            console.log("setting audioPlayer")
             myAudio.setOnPlaybackStatusUpdate((playerStatus) => {                
                 console.log("again")
                 if (playerStatus.isPlaying === true)
@@ -147,7 +147,7 @@ const SoundScreen = ({navigation}) => {
             }
         }
         else
-            console.log("need to stop when not playing??")
+            console.log("stop when not playing")
     }
 
     // handle recording button click
@@ -180,14 +180,13 @@ const SoundScreen = ({navigation}) => {
           name: 'AudioFile'+'.'+splitedUri[splitedUri.length - 1],
           extension: soundUri.split(".")[1]})  
         console.log(soundUri.split(".")[1]);
+        // await fetchWithTimeout('http://192.168.1.224:3000/insertAudio', { // for phone lan ipv4 make sure phone wifi!
         await fetchWithTimeout('https://o5d9cl8ib7.execute-api.us-east-1.amazonaws.com/firstAttempt/{proxy+}', {
             timeout: 30000, // 30 sec timeout, maybe need more
             method: 'POST',
             headers: {
-                "X-Requested-With": "XMLHttpRequest",  // same with or without?
-            //     // Accept: 'multipart/form-data',  //needed?       those 2 make network prob?!
-                'Content-Type': 'multipart/form-data'  // VERY IMPORTANT IN FLASK WAS IN COMMENT!!! but seems to work at first in aws.
-            //   'name': 'AudioFile'+'.'+splitedUri[splitedUri.length - 1],    // ADDED TO TRY SEE FOR WAV
+                "X-Requested-With": "XMLHttpRequest",  
+                'Content-Type': 'multipart/form-data'  
             },
             body: formdata,
         })

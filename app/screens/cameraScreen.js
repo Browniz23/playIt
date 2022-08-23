@@ -70,6 +70,12 @@ const CameraScreen = ({navigation}) => {
 
     // send image to server to perform analyze and get result
     const sendImage = async () => {
+      if (!image || !image.uri) {
+        console.log("error occured", err);
+        Alert.alert('Problem', 'some problem occured, please try again',
+            [{ text: 'OK', onPress: () => console.log('OK Pressed') }]); 
+        setClickedAnalyze(false);
+      }
       splitedUri = image.uri.split(".") 
       const formdata = new FormData();
       formdata.append('file', {
@@ -84,10 +90,8 @@ const CameraScreen = ({navigation}) => {
         timeout: 30000, // 30 sec timeout
         method: 'POST',
         headers: {
-            "X-Requested-With": "XMLHttpRequest",  // same with or without?
-        //     // Accept: 'multipart/form-data',  //needed?       those 2 make network prob?!
-            'Content-Type': 'multipart/form-data'  // VERY IMPORTANT IN FLASK WAS IN COMMENT!!! but seems to work at first in aws.
-        //   'name': 'AudioFile'+'.'+splitedUri[splitedUri.length - 1],    // ADDED TO TRY SEE FOR WAV
+            "X-Requested-With": "XMLHttpRequest",  
+            'Content-Type': 'multipart/form-data'  
         },
         body: formdata,
       })
@@ -214,33 +218,26 @@ const styles = StyleSheet.create({
       justifyContent: 'center'
     },
     c1 :{
-        // flex: 1,
         alignItems: 'flex-end',
         justifyContent: 'space-evenly',
-        // backgroundColor: "blue",
         flexDirection: 'row',
         borderColor: 'black',
         // borderWidth: 3,
         borderRadius: 10
     },
     c2 :{
-        // flex: 1,
         alignItems: 'center',
         justifyContent: 'space-around',
-        // backgroundColor: "green",
         padding: 10,
         margin: 1,
-        // borderColor: 'black',
         // borderWidth: 3
     },
     c22: {
       flex: 1,
       alignItems: 'center',
       justifyContent: 'space-around',
-      // backgroundColor: "green",
       padding: 10,
       margin: 2,
-      // borderColor: 'black',
       // borderWidth: 3
     },
     c3 :{

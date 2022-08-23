@@ -83,5 +83,5 @@ def insertAudio():
     return jsonify({"notes": notesList})
 
 if __name__ == "__main__":
-    # app.run(host='192.168.1.100', port = 3000 ,debug=True)    # for wifi new 100 instead of 231 
+    # app.run(host='192.168.1.224', port = 3000 ,debug=True)    # for wifi new 100 instead of 231 
     app.run(host='192.168.56.1', port = 3000 ,debug=True) # for emulator

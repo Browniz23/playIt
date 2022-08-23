@@ -6,7 +6,7 @@ import os
 import numpy as np 
 import scipy.io.wavfile as wavfile 
 import scipy.fftpack as fftpk
-# from pydub import AudioSegment
+from pydub import AudioSegment
 
 
 NOTES_FREQS = [27.50000, 29.13524, 30.86771, 32.70320, 34.64783, 36.70810, 38.89087, 41.20344, 43.65353, 46.24930, 48.99943, 51.91309,
@@ -18,7 +18,7 @@ NOTES_FREQS = [27.50000, 29.13524, 30.86771, 32.70320, 34.64783, 36.70810, 38.89
 1760.0, 1864.65536, 1975.53344, 2093.0048, 2217.46112, 2349.3184, 2489.01568, 2637.02016, 2793.82592, 2959.9552, 3135.96352, 3322.43776,
 3520.0, 3729.31072, 3951.06688, 4186.0096, 4434.92224, 4698.6368, 4978.03136, 5274.04032, 5587.65184, 5919.9104, 6271.92704, 6644.87552]
 
-def closestPianoNoteNum(freq): # is binary search here significant?
+def closestPianoNoteNum(freq):
     if freq <= 0:
         return -1
     for i,x in enumerate(NOTES_FREQS):
@@ -50,11 +50,11 @@ def getFFTNotes(filename):
     print(extension)
     wav_filename = filename
     if extension != 'wav' and extension != 'WAV':
-        return []
+        # return []
         # works only if added layer pydub - need to make lambda bit larger. for now only wav files.
-        # wav_filename = ''.join(filename.split('.')[:-1]) + '.wav'
-        # track = AudioSegment.from_file(filename,  format= extension)
-        # file_handle = track.export(wav_filename, format='wav')
+        wav_filename = ''.join(filename.split('.')[:-1]) + '.wav'
+        track = AudioSegment.from_file(filename,  format= extension)
+        file_handle = track.export(wav_filename, format='wav')
 
     # read file and set parameters
     rate, data = wavfile.read(wav_filename)
