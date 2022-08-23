@@ -9,3 +9,4 @@ Using this app, you'll be able to:
 2) Extract the notes of a melody from an audio. 
 3) Get a 'machine learning' composed chords for any melody.
 
+You can access this app using the 'expo' app. App link in expo is exp://exp.host/@browniz25/playIt?release-channel=default

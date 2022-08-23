@@ -14,7 +14,6 @@ import PianoScreen from './screens/pianoScreen';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import {Restart} from 'fiction-expo-restart';
 import {I18nManager} from 'react-native';
-// import NavigationBarScreen from './screens/navigationBarScreen';
 
 
 const Tab = createBottomTabNavigator();
@@ -32,17 +31,6 @@ function FeaturesTabs (props) {
   }, []);
   return (
       <Tab.Navigator initialRouteName={initialRoute} backBehavior='none'
-      // screenOptions={({ route }) => ({ //TODO: DOESNT REALLY NEED!
-      //     screenOptions: ({ focused, color, size }) => {
-      //         if (route.name === 'Image') {
-      //             return <Image style={styles.logo} source={require('../assets/camera.png')}/>
-      //         } else if (route.name === 'Sound') {
-      //             return <Image style={styles.logo} source={require('../assets/microphone.png')}/>
-      //         } else {
-      //             return <Image style={styles.logo} source={require('../assets/symphony.jpg')}/>
-      //         }
-      //     },
-      // })}
       tabBarStyle={{
           activeTintColor: 'tomato',
           inactiveTintColor: 'gray',

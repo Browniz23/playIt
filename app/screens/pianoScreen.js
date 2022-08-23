@@ -16,7 +16,6 @@ const { height } = Dimensions.get("window");
 const { width } = Dimensions.get("window");
 const teoria = require('teoria');
 const BLACKS = [2,5,7,10,12,14,17,19,22,24,26,29,31,34,36,38,41,43,46,48,50,53,55,58,60,62,65,67,70,72,74,77,79,82,84,86];
-// var SPEED = 6;
 
 // is given teoria key is black key
 function isBlack(note) {    
@@ -65,6 +64,7 @@ const PianoScreen = ({ route, navigation }) => {
     const [isVisibleChord, setIsVisibleChord] = useState(false);
     const [currChordName, setCurrChordName] = useState('');
     const [chordNotes, setChordNotes] = useState(['','','','','']);
+    const [speed, setSpeed] = useState(1);
     const isVisibleDotRef = React.useRef(isVisibleDot);
     const isVisibleChordRef = React.useRef(isVisibleChord);
     isVisibleDotRef.current = isVisibleDot;
@@ -107,8 +107,7 @@ const PianoScreen = ({ route, navigation }) => {
             (async () => {
                 // chords loop
                 for (c = startChordIdx; c < chords.length && stillAlive; c++) {
-                    // var showTime = (c == 0) ? 250 : 1000 * SPEED / chords[c-1].notes()[0].duration.value;
-                    var showTime = (c == 0) ? 250 : chords[c-1].notes()[0].duration.value * 200;
+                    var showTime = (c == 0) ? 250 : chords[c-1].notes()[0].duration.value * 200 / speed;
                     if (chordTimeLeft != 0) {
                         showTime = chordTimeLeft;
                         c = startChordIdx;
@@ -118,7 +117,6 @@ const PianoScreen = ({ route, navigation }) => {
                     }
                     await new Promise((resolve, reject) => {
                         chordTimerEnd = new Date().getTime() + showTime;
-                        // console.log(chordTimerEnd-showTime, chordTimerEnd);
                         var chordNotes = chords[c].notes();
                         chordTimer = setTimeout(() => {
                             setIsVisibleChord(true);
@@ -151,11 +149,10 @@ const PianoScreen = ({ route, navigation }) => {
                             setIsVisibleChord(false);
                             if (!isVisibleDotRef.current) {
                                 console.log("ISPLAYING CHANGE AT END!")
-                                setIsPlaying(false);        // TODO: deal with notes collision!
+                                setIsPlaying(false);        
                             }
                             resolve()
-                        // }, !isPlaying ? 0 : SPEED / chords[c-1].notes()[0].duration.value * 1000);
-                        }, !isPlaying ? 0 : chords[c-1].notes()[0].duration.value * 200);
+                        }, !isPlaying ? 0 : chords[c-1].notes()[0].duration.value * 200 / speed);
                     });
                 }
             })();
@@ -163,8 +160,7 @@ const PianoScreen = ({ route, navigation }) => {
             (async () => {
                 // notes loop
                 for (n = startNoteIdx; n < notes.length && stillAlive; n++) {
-                    // var showTime = (n == 0) ? 250 : 1000 * SPEED / notes[n-1].duration.value;
-                    var showTime = (n == 0) ? 250 : notes[n-1].duration.value * 200;
+                    var showTime = (n == 0) ? 250 : notes[n-1].duration.value * 200 / speed;
                     if (timeLeft != 0) {
                         showTime = timeLeft;
                         n = startNoteIdx;
@@ -179,7 +175,6 @@ const PianoScreen = ({ route, navigation }) => {
                                 setIsVisibleDot(true);
                                 console.log(notes[n].name(), notes[n].key(true));
                                 if (!isBlack(notes[n])) {
-                                    // setSpot(-0.0452 + 0.0184 * notes[n].key(true));
                                     setSpot(-0.0143 + 0.0193 * notes[n].key(true));
                                     setBlackWhiteSpot(0.42);
                                     setCurrNoteName(notes[n].name());
@@ -209,8 +204,7 @@ const PianoScreen = ({ route, navigation }) => {
                                 setIsPlaying(false);        // TODO: deal with notes collision!
                             }
                             resolve()
-                        // }, !isPlaying ? 0 : SPEED / notes[n-1].duration.value * 1000);
-                        }, !isPlaying ? 0 : notes[n-1].duration.value * 200);
+                        }, !isPlaying ? 0 : notes[n-1].duration.value * 200 / speed);
                     });
                 }
             })();
@@ -257,7 +251,7 @@ const PianoScreen = ({ route, navigation }) => {
             spot = -0.0143 + 0.0193 * 27; // 27 is 'e4' note num.
         }
         return {
-            top: height * spot - 25 + height*0.0161 + 12, // need fix 15 according height! // added +15 for safe area (as keyboard pic). swapped 15 with 11 for emulator and than height*0.0161
+            top: height * spot - 25 + height*0.0161 + 12, 
             left: width * blackWhiteSpot - 25 + 120, 
             position: "absolute", 
             fontSize: 20,
@@ -267,7 +261,27 @@ const PianoScreen = ({ route, navigation }) => {
             color: "black"
         }
     }
-    
+    var faster = function() 
+    {
+        // speed is updating only after pause\stop
+        if (speed < 4) {
+            setSpeed(speed + 0.25)
+            if (!isPaused && isPlaying) {
+                setIsPaused(true);
+                setIsPlaying(false);
+            }
+        }
+    }
+    var slower = function() 
+    {
+        if (speed > 0.25) {
+            setSpeed(speed - 0.25)
+            if (!isPaused && isPlaying) {
+                setIsPaused(true);
+                setIsPlaying(false);
+            }
+        }
+    }
     // actual view
     return (
         <ImageBackground source={require('../../assets/music_brown.jpg')} resizeMode="cover" style={styles.backgroundPicture}>
@@ -297,14 +311,19 @@ const PianoScreen = ({ route, navigation }) => {
             <View style={dot(chordSpot[4],chordBlackWhiteSpot[4])}>
                 <EIonicons name='dot-single' size={isVisibleChord && (isPlaying || isPaused) ? 50 : 0} style={styles.chordDot}/>    
             </View>
-            <Pressable
+            {/* <Pressable
                 onPress={() => {setLongPiano(!longPiano)}}
                     style={styles.wrapperCustom}>
                     {() => (
                     longPiano ? <FIonicons name='zoom-in' size={30} style={styles.zoom}/> :
                         <FIonicons name='zoom-out' size={30} style={styles.zoom}/>
                 )}
-            </Pressable>
+            </Pressable> */}
+            <View style={styles.wrapperCustom}>
+                <FaIcon name="minus" size={20} onPress={slower} style={styles.stop}/>
+                <FaIcon name="plus" size={20} onPress={faster} style={styles.play}/>
+                <Text style={styles.speed}>{parseFloat(speed).toFixed(2)}</Text>
+            </View>
             <View style={styles.actionButtons}>
                 <FaIcon name="stop-circle" size={60} onPress={onStop} style={styles.stop}/>
                 {(isPlaying ? <FIonicons name="pause-circle" size={55} onPress={onPause} style={styles.play}/> : 
@@ -317,13 +336,11 @@ const PianoScreen = ({ route, navigation }) => {
 // styles
 const styles = StyleSheet.create({
     wrapperCustom: {
-        // width: 30,
-        // height: 30,
-        // direction: "ltr",
         position: 'absolute',
         top: 60,
         left: 40,
         color: "steelblue",
+        justifyContent: "space-between"
     },
     longPiano: {
         // borderWidth: 2,
@@ -331,12 +348,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         height: height,
         width: width * 0.7,
-        // width: width * 0.5,
-        // added:
-        // top: 15 // margin from top
-        top: 12 // instead of 15 doesnt make sense!!
-        // position: 'absolute', 
-        // bottom: 0,
+        top: 12 
     },
     shortPiano: {
         width: width * 1.3,
@@ -399,6 +411,20 @@ const styles = StyleSheet.create({
             padding: 3,
             transform: [{ rotate: "90deg" }],
             color: "red"
+    },
+    speed: {
+        fontSize: 18, 
+        fontWeight: 'bold',
+        transform: [{ rotate: "90deg" }],
+        color: "black"
+    },
+    speedContainer: {
+        flexDirection: "row",
+        position: 'absolute',
+        top: 60,
+        left: 40,
+        color: "steelblue",
+        justifyContent: "space-between"
     }
 });
 export default PianoScreen;

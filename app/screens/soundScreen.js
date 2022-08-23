@@ -26,7 +26,6 @@ const SoundScreen = ({navigation}) => {
     // state & ref variables
     const [recording, setRecording] = React.useState(); 
     const recRef = React.useRef(recording);
-    // const setRecRef = React.useRef(setRecording);
     const [isUploaded, setIsUploaded] = React.useState(false);
     const [soundUri, setSoundUri] = React.useState(null);
     const [isPlaying, setIsPlaying] = React.useState(false);
@@ -64,7 +63,6 @@ const SoundScreen = ({navigation}) => {
             console.error('Failed to start recording', err);
         }
         setIsUploaded(undefined)
-        // this function will be fired when you leave the page
     }
 
     // recording stop
@@ -74,7 +72,7 @@ const SoundScreen = ({navigation}) => {
                 console.log('Stopping recording..');
                 await recording.stopAndUnloadAsync(); 
                 setSoundUri(recording.getURI());
-                setRecording(undefined);                    // todo: order here is not peoblem?!?! was first of 3
+                setRecording(undefined);                    
                 console.log('Recording stopped and stored at', soundUri);
                 if (Platform.OS !== 'ios')
                     ToastAndroid.show('Recording stopped', ToastAndroid.SHORT);
@@ -94,7 +92,6 @@ const SoundScreen = ({navigation}) => {
     pickAudio = async () => {
         let options = {
         type:["audio/mpeg", "audio/ogg", "audio/wav", "audio/x-wav", "audio/vnd.wav", "audio/*"]
-        // type:["audio/mpeg"]
         }
         let result = await DocumentPicker.getDocumentAsync(options);
         console.log(result);
@@ -181,10 +178,10 @@ const SoundScreen = ({navigation}) => {
         //   type: 'audio/*',
           type: 'audio/acc',
           name: 'AudioFile'+'.'+splitedUri[splitedUri.length - 1],
-          extension: soundUri.split(".")[1]})  // not sure needed (maybe keep in comment)
+          extension: soundUri.split(".")[1]})  
         console.log(soundUri.split(".")[1]);
         await fetchWithTimeout('https://o5d9cl8ib7.execute-api.us-east-1.amazonaws.com/firstAttempt/{proxy+}', {
-            timeout: 15000, // 15 sec timeout, maybe need more
+            timeout: 30000, // 30 sec timeout, maybe need more
             method: 'POST',
             headers: {
                 "X-Requested-With": "XMLHttpRequest",  // same with or without?
@@ -229,11 +226,9 @@ const SoundScreen = ({navigation}) => {
         console.log("OUT!");
         return ()=>{
             console.log("IN!", recRef.current?false:true, isPlayRef.current);
-            // audioPlayer && audioPlayer.unloadAsync();
             console.log(recRef.current);
             if (recRef.current) {
                 console.log(true);
-                // setRecRef.current(undefined);                    // todo: order here is not peoblem?!?!
                 recRef.current.stopAndUnloadAsync();
             }
             if (isPlayRef.current) {
@@ -343,48 +338,36 @@ const styles = StyleSheet.create({
         justifyContent: 'center'
     },
     c1 :{
-        // flex: 1,
         alignItems: 'flex-end',
         justifyContent: 'space-evenly',
         flexDirection: 'row',
-        // borderColor: 'black',
         // borderWidth: 3
     },
     c2 :{
-        // flex: 1,
         alignItems: 'center',
         justifyContent: 'space-around',
-        // backgroundColor: "green",
         padding: 10,
         margin: 1,
         marginRight: 10,
         marginLeft: 10,
-        // borderColor: 'black',
         // borderWidth: 3
     },
     c22 :{
         flex: 1,
         alignItems: 'center',
         justifyContent: 'space-around',
-        // backgroundColor: "green",
         padding: 10,
         margin: 2,
-        // borderColor: 'black',
         // borderWidth: 3
     },
     c3 :{
         alignItems: 'center',
         justifyContent: 'center',
-        // backgroundColor: "navy",
         padding: 10,
     },
     c4: {
-        // flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        // backgroundColor: "green",
-        // padding: 10,
-        // borderWidth: 3,
     },
     logo :{
         width: 170,
