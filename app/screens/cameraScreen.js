@@ -6,6 +6,8 @@ import MCiIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import FaIcon from 'react-native-vector-icons/FontAwesome';
 import * as ExpoFileSystem from 'expo-file-system'
 
+const teoria = require('teoria');
+
 // fetch with given timeout function
 async function fetchWithTimeout(resource, options = {}) {
   const { timeout = 5000 } = options;
@@ -19,13 +21,14 @@ async function fetchWithTimeout(resource, options = {}) {
   return response;
 }
 
-const CameraScreen = (props) => {
+const CameraScreen = ({navigation}) => {
 
     // state variables
     const [image, setImage] = useState(null);
     const [clickedAnalyze, setClickedAnalyze] = useState(false);
     const [dots, setDots] = useState("   ");
     const [modalVisible, setModalVisible] = useState(false);
+    const [notes, setNotes] = useState(null);
 
     // permissions - first time
     useEffect(() => {
@@ -44,7 +47,7 @@ const CameraScreen = (props) => {
         let result = await ImagePicker.launchImageLibraryAsync({
           mediaTypes: ImagePicker.MediaTypeOptions.Images,
           allowsEditing: true,
-          aspect: [4, 3],
+          // aspect: [4, 3], 
           quality: 1,
         });    
         if (!result.cancelled) {
@@ -57,7 +60,7 @@ const CameraScreen = (props) => {
         let result = await ImagePicker.launchCameraAsync({
           mediaTypes: ImagePicker.MediaTypeOptions.Images,
           allowsEditing: true,
-          aspect: [4, 3],
+          // aspect: [4, 3],
           quality: 1,
         });
         if (!result.cancelled) {
@@ -67,25 +70,41 @@ const CameraScreen = (props) => {
 
     // send image to server to perform analyze and get result
     const sendImage = async () => {
+      splitedUri = image.uri.split(".") 
       const formdata = new FormData();
       formdata.append('file', {
         uri: image.uri,
         type: 'image/jpeg',
-        name: 'imageFile',
+        name: 'imageFile'+'.'+splitedUri[splitedUri.length - 1],  
         extension: image.uri.split(".")[1]})  // not sure needed (maybe keep in comment)
-      await fetchWithTimeout('http://192.168.1.231:3000/insertImage', { // for phone lan ipv4 make sure phone wifi!
-            timeout: 2000,
-            method: 'POST',
-            headers: {
-                "X-Requested-With": "XMLHttpRequest"  // same with or without?
-            //     // Accept: 'multipart/form-data',  //needed?       those 2 make network prob?!
-            //     'Content-Type': 'multipart/form-data'  // added this line. changed?
-            },
-            body: formdata
+
+      // await fetchWithTimeout('http://192.168.1.100:3000/insertImage', { // for phone lan ipv4 make sure phone wifi!
+      // await fetchWithTimeout('https://vy1c5yyy63.execute-api.us-east-1.amazonaws.com/secondAttempt/{proxy+}', {
+      await fetchWithTimeout('http://192.168.56.1:3000/insertImage', { // emulator
+        timeout: 30000, // 30 sec timeout
+        method: 'POST',
+        headers: {
+            "X-Requested-With": "XMLHttpRequest",  // same with or without?
+        //     // Accept: 'multipart/form-data',  //needed?       those 2 make network prob?!
+            'Content-Type': 'multipart/form-data'  // VERY IMPORTANT IN FLASK WAS IN COMMENT!!! but seems to work at first in aws.
+        //   'name': 'AudioFile'+'.'+splitedUri[splitedUri.length - 1],    // ADDED TO TRY SEE FOR WAV
+        },
+        body: formdata,
       })
-      .then(resp => {
-        resp.json();
+      .then(resp => resp.json())
+      .then(notes => {
+        console.log(notes);
         console.log("printed when returned (can take a while)");
+        var notesList = []
+        for (var i = 0; i < notes['notes'].length; i++) {
+            var name = teoria.note.fromKey(Number(notes['notes'][i][0])).toString()
+            var durr = 8 * Number(notes['notes'][i][1]) // in 200 millisec units ('2'-> 400 ms) + mult 4 for normal speed
+            notesList.push(teoria.note(name, { value: durr }));
+        }
+        for (i = 0; i < notesList.length; i++) {
+            console.log(notesList[i].toString(), notesList[i].duration.value);
+        }
+        setNotes(notesList)  
         setClickedAnalyze(false);
       })
       .catch(err => {
@@ -174,6 +193,7 @@ const CameraScreen = (props) => {
                 </Text>
               </Pressable>}
               {clickedAnalyze && <ActivityIndicator size="large" color="#00ff00" />}
+              {!clickedAnalyze && notes && <Button title="show" onPress={() => {navigation.navigate('Piano', {notes: notes, chords: [], screen: 'Piano'})}}/>}
             </View>
           </ImageBackground>
         </View>

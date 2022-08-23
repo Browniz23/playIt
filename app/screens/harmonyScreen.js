@@ -42,8 +42,9 @@ const HarmonyScreen = ({navigation}) => {
     var h = teoria.note('f#4', { value: 4 });
     var i = teoria.note('g#5', { value: 4 });
     var notes = [a,b,c,d,e,f,g,h,i];
-    var ch1 = teoria.chord('g',6); var ch2 = teoria.chord('a7',5); var ch3 = teoria.chord('c',5); var ch4 = teoria.chord('f',6);
+    var ch1 = teoria.chord('g7',6); var ch2 = teoria.chord('a7',5); var ch3 = teoria.chord('c',5); var ch4 = teoria.chord('f',6);
     var chords = [ch1, ch2, ch3, ch4];
+    notes = [] // show only chords
 
     // state variables
     const [clickedCreate, setClickedCreate] = useState(false);
@@ -52,11 +53,12 @@ const HarmonyScreen = ({navigation}) => {
     const [dots, setDots] = React.useState("   ");
     const [chordList, setChordList] = React.useState(chords); // only for easy checking
     const [modalVisible, setModalVisible] = useState(false);
+    const [csvDoc, setCsvDoc] = useState(null);
 
     // get CSV file from library
     pickCSV = async () => {
         let options = {
-        type:["text/comma-separated-values", 'text/csv'] // maybe only for android. ios maybe text/csv
+        type:["text/comma-separated-values", 'text/csv'] 
         }
         let result = await DocumentPicker.getDocumentAsync(options);
         console.log(result); 
@@ -66,27 +68,52 @@ const HarmonyScreen = ({navigation}) => {
             const fileContent = await ExpoFileSystem.readAsStringAsync(result.uri);
             console.log(fileContent);
             setMelodyData(fileContent);
+            setCsvDoc(result)
         }
     }
 
     // send csv to server to perform analyze and get chords list as result
     const insertData = async () => {
-        await fetchWithTimeout('http://192.168.1.231:3000/insert', { 
-            timeout: 3000, // 3 sec timeout, change when acutally call
+        // sending CSV data only
+        // await fetchWithTimeout('http://192.168.1.231:3000/insertCSV', { 
+        // await fetchWithTimeout('https://w15y28voif.execute-api.us-east-1.amazonaws.com/thirdAttempt/{proxy+}', {
+        //     timeout: 30000, // 30 sec timeout
+        //     method: 'POST',
+        //     headers: {
+        //         Accept: 'application/json',
+        //         'Content-Type': 'application/json'  // I added this line
+        //     },
+        //     body: JSON.stringify({melodyData : melodyData}),
+        // }) 
+
+        // sending entire CSV file (for aws compatability)
+        splitedUri = csvDoc.uri.split(".") 
+        const formdata = new FormData();
+        formdata.append('file', {
+        uri: csvDoc.uri,
+        type: 'text/comma-separated-values', 
+        name: 'csvFile'+'.'+splitedUri[splitedUri.length - 1],  
+        extension: csvDoc.uri.split(".")[1]})  // not sure needed (maybe keep in comment)
+        // await fetchWithTimeout('https://w15y28voif.execute-api.us-east-1.amazonaws.com/thirdAttempt/{proxy+}', {
+        // await fetchWithTimeout('http://192.168.1.100:3000/insertCSV', { //wifi
+        await fetchWithTimeout('http://192.168.56.1:3000/insertCSV', { // emulator
+            timeout: 30000, // 30 sec timeout
             method: 'POST',
             headers: {
-                Accept: 'application/json',
-                'Content-Type': 'application/json'  // I added this line
+                "X-Requested-With": "XMLHttpRequest",  // same with or without?
+                // Accept: 'multipart/form-data',  //needed?       those 2 make network prob?!
+                'Content-Type': 'multipart/form-data'  // VERY IMPORTANT IN FLASK WAS IN COMMENT!!! but seems to work at first in aws.
+                //   'name': 'AudioFile'+'.'+splitedUri[splitedUri.length - 1],    // ADDED TO TRY SEE FOR WAV
             },
-            body: JSON.stringify({melodyData : melodyData}),
-        }) 
+            body: formdata,
+        })
         .then(resp => resp.json())
         .then(d => {
             console.log("printed when returned (can take a while)");
             var chordList = []
             for (var i = 0; i < d['chords'].length; i++) {
-                var name = d['chords'][i][0];
-                var octave = d['chords'][i][1];
+                var name = d['chords'][i];
+                var octave = 3;
                 chordList.push(teoria.chord(name, octave));
             }
             for (i = 0; i < chordList.length; i++) {
@@ -173,7 +200,7 @@ const HarmonyScreen = ({navigation}) => {
                     </Text>
                     </Pressable>}
                     {clickedCreate && <ActivityIndicator size="large" color="#00ff00" />}
-                    {!clickedCreate && chordList && <Button title="show" onPress={() => {navigation.navigate('Piano', {notes: notes, chords: chords, screen: 'Piano'})}}/>}
+                    {!clickedCreate && chordList && <Button title="show" onPress={() => {navigation.navigate('Piano', {notes: notes, chords: chordList, screen: 'Piano'})}}/>}
                 </View>
                 </View>
             </ImageBackground>
@@ -188,7 +215,6 @@ const styles = StyleSheet.create({
         backgroundColor: "lavender",
     },
     c1 :{
-        // flex: 1,
         alignItems: 'flex-end',
         justifyContent: 'space-evenly',
         backgroundColor: "blue",
@@ -196,33 +222,17 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
     },
     c2 :{
-        // flex: 1,
-        // alignItems: 'center',
-        // justifyContent: 'center',
-        // // backgroundColor: "green",
-
-         // flex: 1,
          alignItems: 'center',
          justifyContent: 'space-around',
-         // backgroundColor: "green",
          padding: 10,
          margin: 1,
-         // borderColor: 'black',
          // borderWidth: 3
     },
     c3 :{
-        // flex: 1,
-        // alignItems: 'center',
-        // justifyContent: 'flex-start',
-        // padding: 10,
-
-        // flex: 1,
         alignItems: 'center',
         justifyContent: 'space-around',
-        // backgroundColor: "green",
         padding: 10,
         margin: 2,
-        // borderColor: 'black',
         // borderWidth: 3
     },
     logo :{

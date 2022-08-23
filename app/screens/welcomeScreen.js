@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   backgroundVideo: {
-    height: height + 30, /* how to know 30?*/
+    height: height + 30, 
     position: "absolute",
     top: 0,
     left: 0,
